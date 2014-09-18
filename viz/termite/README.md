@@ -18,17 +18,17 @@ The Termite plot is a visual analysis tool for assessing topic model quality. We
 Alternatively, if you don't want to create a conda environment and wish to install the requirements with other package managers, you can install yourself the packages under `requirements.txt` and run:
 
 
-    ```bash
-    # Generate csv to preprocess data to visualize data.
-    python summary_to_csv.py
-    
-    # Generate csv to preprocess data to visualize data. Get the topics relevance to order.
-    python summary_csv_topics.py
+```bash
+# Generate csv to preprocess data to visualize data.
+python summary_to_csv.py
 
-    # Generate the Bokeh.plot Termite
-    python termite.py
-    ```
-    
+# Generate csv to preprocess data to visualize data. Get the topics relevance to order.
+python summary_csv_topics.py
+
+# Generate the Bokeh.plot Termite
+python termite.py
+```
+
 #### Requirements
 
 Requirements are available in requirements.txt.
