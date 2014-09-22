@@ -1,5 +1,6 @@
 
 import numpy as np
+from numpy import pi, cos, sin
 from random import randint
 
 from bokeh.document import Document
@@ -41,7 +42,9 @@ class RadialGraph(HasProps):
 
 def make_fake_data(num_start_nodes, num_steps, max_span_out):
     """ 
-    Returns (ids, times, edgelist)
+    Returns ((node ids, times, relevance), edgelist) where
+    node IDs are unique integers, times are generally increasing
+    numbers, and relevance is a random score between 0 and 1
     """
     nodes = range(num_start_nodes)
     times = [0]*num_start_nodes
@@ -64,10 +67,15 @@ def make_fake_data(num_start_nodes, num_steps, max_span_out):
         times.extend([generation+1]*len(frontier))
         last_frontier = frontier
         frontier = []
+    
+    # Gaussian distribution of relevance
+    relevance = np.fabs(np.random.normal(size=len(times)))
+    # Flat (uniform) distribution of relevance
+    # relevance = np.random.uniform(size=len(times))
 
-    return np.array((nodes, times)).T, np.array(edges)
+    return np.array((nodes, times, relevance)).T, np.array(edges)
 
-def _layout_nodes(nodes):
+def _rectilinear_layout(nodes):
     """ Given the list of nodes (Nx2 of node IDs and times), returns a new
     length-N array which provides some canonical Y position for each node.
     The times are assumed to be contiguous and monotonic.
@@ -78,36 +86,80 @@ def _layout_nodes(nodes):
     # TODO: Fix some of the edge cases (e.g. when there is just one node 
     # in the last time slot); make robust if input times are not monotonic
     times = nodes[:,1]
+    relevances = nodes[:,2]
     yindex = np.hstack(([0], np.where(times[1:] - times[:-1] != 0)[0] + 1, [len(times)]))
     ycounts = yindex[1:] - yindex[:-1]
     yvals = np.empty_like(times)
 
     for start, count in zip(yindex,ycounts):
-        yvals[start:start+count] = np.arange(count)
+        # Uncomment the following if unsorted is desired
+        #yvals[start:start+count] = np.linspace(-count/2.0, count/2.0, count)
+        # Sort by relevance
+        rel = np.argsort(relevances[start:start+count])
+        yvals[rel+start] = np.linspace(-count/2.0, count/2.0, count)
     return yvals
 
 
 def crawlchart(nodes, edgelist):
     """ edges is an Nx2 array of node ids 
     """
-    # Need to map incrementing list of node IDs to actual Y values
-    ids, times = nodes.T
-    node_y = _layout_nodes(nodes)
+    ids, times, relevances = nodes.T
+    times *= 2
+    node_y = _rectilinear_layout(nodes)
     hold()
-    circle(times, node_y, color="red", size=3)
+    #circle(times, node_y, color="gray", size=1)
+
+    # Draw the relevant points in a different color
+    circle(times, node_y, color="red", size=relevances*6, alpha=relevances)
 
     nodepos = np.asarray((times,node_y)).T
     coords = nodepos[edgelist].reshape((len(edgelist), 4)).T
     segment(coords[0], coords[1], coords[2], coords[3],
             line_alpha=0.35)
 
+def _radial_layout(nodes):
+    """ Returns Xs and Ys """
+    times = nodes[:,1]
+    relevances = nodes[:,2]
+    yindex = np.hstack(([0], np.where(times[1:] - times[:-1] != 0)[0] + 1, [len(times)]))
+    ycounts = yindex[1:] - yindex[:-1]
+    
+    xvals = np.empty_like(times)
+    yvals = np.empty_like(times)
+
+    for i, (start, count) in enumerate(zip(yindex, ycounts)):
+        r = (i+1)*15
+        thetas = np.linspace(0, 2*pi, count)
+        xvals[start:start+count] = r * cos(thetas)
+        yvals[start:start+count] = r * sin(thetas)
+    return xvals, yvals
+
+def radialchart(nodes, edgelist):
+    ids, times, relevances = nodes.T
+    times *= 2
+    node_x, node_y = _radial_layout(nodes)
+    nodepos = np.asarray((node_x, node_y)).T
+    hold()
+    circle(node_x, node_y, color="red", size=relevances*4, alpha=relevances)
+    coords = nodepos[edgelist].reshape((len(edgelist), 4)).T
+    segment(coords[0], coords[1], coords[2], coords[3],
+            line_alpha=0.35)
     
 def main():
-    nodes, edges = make_fake_data(50, 80, 2)
-    figure(plot_width=1000, plot_height=500)
-    output_file("plot.html")
-    crawlchart(nodes, edges)
-    show()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "radial":
+        nodes, edges = make_fake_data(20, 200, 2)
+        figure(plot_width=1000, plot_height=1000, x_axis_type=None, y_axis_type=None)
+        output_file("radial.html")
+        radialchart(nodes, edges)
+        show()
+        
+    else:
+        nodes, edges = make_fake_data(100, 80, 2)
+        figure(plot_width=1000, plot_height=400, y_axis_type=None)
+        output_file("crawl.html")
+        crawlchart(nodes, edges)
+        show()
 
 
 if __name__ == "__main__":
