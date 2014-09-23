@@ -66,6 +66,7 @@ public class TargetStorage  extends StorageDefault{
 	private List<String> harvestRates;
 
 	private TargetMonitor monitor;
+
 //////////////////////////////////////
 	private boolean hardFocus;
 	
@@ -107,10 +108,10 @@ public class TargetStorage  extends StorageDefault{
 	 */
 	public synchronized Object insert(Object obj) throws StorageException {
 		Page page = (Page)obj;
-  		if (this.langDetect.detect_page(page) == false){
-     			System.out.println(">>>> non-English page: " + page.getIdentifier());
-      			return null;
-    		}
+    if (this.langDetect.detect_page(page) == false){
+     	System.out.println(">>>> non-English page: " + page.getIdentifier());
+      return null;
+    }
 
 		urls.append(fileLocation + File.separator + page.getURL().getHost() + File.separator + URLEncoder.encode(page.getIdentifier()));
 		urls.append("\n");
@@ -262,13 +263,14 @@ public class TargetStorage  extends StorageDefault{
 			TargetRepository targetRepository = new TargetFileRepository(targetDirectory);
 			ParameterFile linkStorageConfig = new ParameterFile(config.getParam("LINK_STORAGE_FILE"));
 			Storage linkStorage = new StorageCreator(linkStorageConfig).produce();
+      int rate = config.getParamInt("DATA_MONITOR_REFRESH_RATE");
 			TargetMonitor mnt = new TargetMonitor("data/data_monitor/crawledpages.csv", 
 																"data/data_monitor/relevantpages.csv", 
 																"data/data_monitor/harvestinfo.csv",
 																"data/data_monitor/nonrelevantpages.csv");//hard coding 
 			Storage targetStorage = new TargetStorage(targetClassifier,targetDirectory,targetRepository,
 					linkStorage,config.getParamInt("VISITED_PAGE_LIMIT"),config.getParamBoolean("HARD_FOCUS"),
-					config.getParamBoolean("BIPARTITE"), 10, 10, 10, mnt);
+					config.getParamBoolean("BIPARTITE"), rate, rate, 10, mnt);
 
 			StorageBinder binder = new StorageBinder(config);
 			binder.bind(targetStorage);
