@@ -62,6 +62,8 @@ class Harvest(object):
         legend().orientation = "top_left"
         show()
 
+        harvest_plot = curplot()
+
         figure(plot_width=800, plot_height=500, title="Harvest Rate", x_axis_type='datetime', tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
         line(x="timestamp", y="harvest_rate", fill_alpha=0.6, color="blue", width=0.2, legend="harvest_rate", source=source)
         scatter(x="timestamp", y="harvest_rate", alpha=0, color="blue", legend="harvest_rate", source=source)
@@ -70,7 +72,8 @@ class Harvest(object):
         hover.tooltips = OrderedDict([
             ("harvest_rate", "@harvest_rate"),
         ])
-
         show()
 
-        return curplot()
+        harvest_rate_plot = curplot()
+
+        return harvest_plot, harvest_rate_plot
