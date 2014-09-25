@@ -1,0 +1,37 @@
+
+Nutch plugin
+How to write Nutch Plugin:
+ant eclipse
+import new project in eclipse
+create new plugin
+add build.xm, ivy.xml, plugin.xml
+Find dependencies here: http://search.maven.org/
+make sure src file in the right direction
+in trunk/build.xml: add new class in two positions (search scoring-filer)
+Go to nutch-default.xml if add new key, value for configuration
+Enable plugin by adding it in nutch-default.xml. key: plugin.includes
+
+‘’’
+add anything similar to scoring-opic in default.properties, src/plugin/build.xml
+‘''
+
+How to compile and run nutch from eclipse: http://wiki.apache.org/nutch/RunNutchInEclipse
+
+add agent to nutch-site.xml
+run inject
+run readdb
+./bin/nutch readdb crawldb -stats	
+run crawl: 
+	cd /Users/kien/git/nutch/trunk_new/runtime/local
+	./bin/crawl urls/ crawldb 5
+
+
+clean:
+	ant clean install
+	ant clean runtime
+check parser: 
+
+./bin/nutch parsechecker -dumpText http://www.polarisproject.org/
+read content of file
+
+./bin/nutch readseg -dump new_crawl/segments/20140924182147/ output_segment/
