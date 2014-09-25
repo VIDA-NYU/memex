@@ -60,7 +60,7 @@ class Termite(object):
         return topics_file, termite_file
 
     def update_source(self):
-        topics_file, termite_file = self.generate_data(self.input_data)
+        topics_file, termite_file = self.generate_data()
         
         t = Table(CSV(termite_file, columns=['topic', 'word', 'result']))
         df = into(DataFrame, t)

@@ -1,3 +1,4 @@
+from __future__ import division
 import csv
 import sys
 from blaze import *
@@ -7,7 +8,6 @@ from bokeh.objects import HoverTool
 from collections import OrderedDict
 import numpy as np
 import datetime as dt
-from __future__ import division
 
 def generate_harvest():
     """
@@ -22,27 +22,15 @@ class Harvest(object):
     def __init__(self, input_data='data_monitor/harvestinfo.csv'):
         self.harvest_data = input_data
         self.source = self.update_source()
-        self.plot, self.rate_plot = self.fcreate_plot()
+        self.plot, self.rate_plot = self.create_plot()
 
     def update_source(self):
         t = Table(CSV(self.harvest_data, columns=['relevant_pages', 'downloaded_pages', 'timestamp']))
         t = transform(t, timestamp=t.timestamp.map(dt.datetime.fromtimestamp, schema='{timestamp: datetime}'))
         t = transform(t, date=t.timestamp.map(lambda x: x.date(), schema='{date: date}'))
-        #t = transform(t, harvest_rate=t.relevant_pages/t.downloaded_pages)
+        t = transform(t, harvest_rate=t.relevant_pages/t.downloaded_pages)
 
-        relevant_pages = into(np.ndarray, t.relevant_pages)
-        downloaded_pages = into(np.ndarray, t.downloaded_pages)
-        harvest_rate = relevant_pages/downloaded_pages
-        timestamp = into(np.ndarray, t.timestamp)
-
-        source = ColumnDataSource(
-            data=dict( 
-                relevant_pages = relevant_pages,
-                downloaded_pages = downloaded_pages,
-                harvest_rate = harvest_rate,
-                timestamp = timestamp
-            )
-        )
+        source = into(ColumnDataSource, t)
 
         return source
 
@@ -50,7 +38,7 @@ class Harvest(object):
 
         output_file(output_html)
 
-        figure(plot_width=800, plot_height=500, title="Harvest Plot", tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover', x_axis_type='datetime')
+        figure(plot_width=500, plot_height=250, title="Harvest Plot", tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover', x_axis_type='datetime')
         hold()
 
         scatter(x="timestamp", y="relevant_pages", fill_alpha=0.6, color="red", source=self.source)
@@ -64,11 +52,10 @@ class Harvest(object):
         ])
 
         legend().orientation = "top_left"
-        show()
 
         harvest_plot = curplot()
 
-        figure(plot_width=800, plot_height=500, title="Harvest Rate", x_axis_type='datetime', tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
+        figure(plot_width=500, plot_height=250, title="Harvest Rate", x_axis_type='datetime', tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
         line(x="timestamp", y="harvest_rate", fill_alpha=0.6, color="blue", width=0.2, legend="harvest_rate", source=self.source)
         scatter(x="timestamp", y="harvest_rate", alpha=0, color="blue", legend="harvest_rate", source=self.source)
 
@@ -76,7 +63,6 @@ class Harvest(object):
         hover.tooltips = OrderedDict([
             ("harvest_rate", "@harvest_rate"),
         ])
-        show()
 
         harvest_rate_plot = curplot()
 
