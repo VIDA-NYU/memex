@@ -136,63 +136,6 @@ def generate_domain_data(minutes=5):
 
     return sort_relevant, sort_crawled, sort_frontier
 
-sort_relevant, sort_crawled, sort_frontier = generate_domain_data()
-
-# Sorted by Relevance
-sort_relevant['relevant_rect'] = sort_relevant['relevant_count'].map(lambda x: x/2)
-sort_relevant['frontier_rect'] = sort_relevant['frontier_count'].map(lambda x: x/2)
-sort_relevant['crawled_rect'] = sort_relevant['crawled_count'].map(lambda x: x/2)
-sort_relevant_source = ColumnDataSource(sort_relevant)
-output_file('domain.html')
-y_range= sort_relevant_source.data['index']
-
-figure(plot_width=800, plot_height=500, title="Domains Sorted by Relevance", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
-
-hold()
-
-rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = sort_relevant_source, legend="frontier")
-rect(y=y_range, x='crawled_rect', height=0.4, width='crawled_count', color="blue", fill_color="blue", source = sort_relevant_source, legend="crawled")
-rect(y=y_range, x='relevant_rect', height=0.4, width='relevant_count', color="red", fill_color="red", source = sort_relevant_source, legend="relevant")
-
-axis().major_label_text_font_size = "8pt"
-
-# Sorted by Frontier
-sort_frontier['relevant_rect'] = sort_frontier['relevant_count'].map(lambda x: x/2)
-sort_frontier['frontier_rect'] = sort_frontier['frontier_count'].map(lambda x: x/2)
-sort_frontier['crawled_rect'] = sort_frontier['crawled_count'].map(lambda x: x/2)
-sort_frontier_source = ColumnDataSource(sort_frontier)
-output_file('domain.html')
-y_range= sort_frontier.data['index']
-
-figure(plot_width=800, plot_height=500, title="Domains Sorted by urls in Frontier", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
-
-hold()
-
-rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = sort_frontier_source, legend="frontier")
-rect(y=y_range, x='crawled_rect', height=0.4, width='crawled_count', color="blue", fill_color="blue", source = sort_frontier_source, legend="crawled")
-rect(y=y_range, x='relevant_rect', height=0.4, width='relevant_count', color="red", fill_color="red", source = sort_frontier_source, legend="relevant")
-
-axis().major_label_text_font_size = "8pt"
-
-# Sorted by Crawled
-sort_crawled['relevant_rect'] = sort_crawled['relevant_count'].map(lambda x: x/2)
-sort_crawled['frontier_rect'] = sort_crawled['frontier_count'].map(lambda x: x/2)
-sort_crawled['crawled_rect'] = sort_crawled['crawled_count'].map(lambda x: x/2)
-sort_crawled_source = ColumnDataSource(sort_crawled)
-
-y_range= sort_crawled_source.data['index']
-
-figure(plot_width=800, plot_height=500, title="Domains Sorted by Crawled urls", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
-
-hold()
-
-rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = sort_crawled_source, legend="frontier")
-rect(y=y_range, x='crawled_rect', height=0.4, width='crawled_count', color="blue", fill_color="blue", source = sort_crawled_source, legend="crawled")
-rect(y=y_range, x='relevant_rect', height=0.4, width='relevant_count', color="red", fill_color="red", source = sort_crawled_source, legend="relevant")
-
-axis().major_label_text_font_size = "8pt"
-
-show()
 
 class Domain(object):
 
@@ -201,41 +144,67 @@ class Domain(object):
 
     def create(self, output_html='domain.html'):
 
+        # Sorted by Relevance
+        self.sort_relevant['relevant_rect'] = self.sort_relevant['relevant_count'].map(lambda x: x/2)
+        self.sort_relevant['frontier_rect'] = self.sort_relevant['frontier_count'].map(lambda x: x/2)
+        self.sort_relevant['crawled_rect'] = self.sort_relevant['crawled_count'].map(lambda x: x/2)
         sort_relevant_source = ColumnDataSource(self.sort_relevant)
-        sort_crawled_source = ColumnDataSource(self.sort_crawled)
-        sort_frontier_source = ColumnDataSource(self.sort_frontier)
+        output_file('domain.html')
+        y_range= sort_relevant_source.data['index']
 
-        output_file(output_html)
+        figure(plot_width=800, plot_height=500, title="Domains Sorted by Relevance", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
 
-        figure(plot_width=800, plot_height=500, title="Domain by Frontier", tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover', x_axis_type='categorical')
         hold()
 
-        scatter(x="timestamp", y="relevant_pages", fill_alpha=0.6, color="red", source=source)
-        line(x="timestamp", y="relevant_pages", color="red", width=0.2, legend="relevant", source=source)
-        scatter(x="timestamp", y="downloaded_pages", fill_alpha=0.6, color="blue", source=source)
-        line(x="timestamp", y="downloaded_pages", color="blue", width=0.2, legend="downloaded", source=source)
+        rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = sort_relevant_source, legend="frontier")
+        rect(y=y_range, x='crawled_rect', height=0.4, width='crawled_count', color="blue", fill_color="blue", source = sort_relevant_source, legend="crawled")
+        rect(y=y_range, x='relevant_rect', height=0.4, width='relevant_count', color="red", fill_color="red", source = sort_relevant_source, legend="relevant")
 
-        hover = curplot().select(dict(type=HoverTool))
-        hover.tooltips = OrderedDict([
-            ("harvest_rate", "@harvest_rate"),
-        ])
+        axis().major_label_text_font_size = "8pt"
 
-        legend().orientation = "top_left"
+        sort_relevant_plot = curplot()
+
+        # Sorted by Frontier
+        self.sort_frontier['relevant_rect'] = self.sort_frontier['relevant_count'].map(lambda x: x/2)
+        self.sort_frontier['frontier_rect'] = self.sort_frontier['frontier_count'].map(lambda x: x/2)
+        self.sort_frontier['crawled_rect'] = self.sort_frontier['crawled_count'].map(lambda x: x/2)
+        sort_frontier_source = ColumnDataSource(self.sort_frontier)
+        output_file('domain.html')
+        y_range= sort_frontier_source.data['index']
+
+        figure(plot_width=800, plot_height=500, title="Domains Sorted by urls in Frontier", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
+
+        hold()
+
+        rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = sort_frontier_source, legend="frontier")
+        rect(y=y_range, x='crawled_rect', height=0.4, width='crawled_count', color="blue", fill_color="blue", source = sort_frontier_source, legend="crawled")
+        rect(y=y_range, x='relevant_rect', height=0.4, width='relevant_count', color="red", fill_color="red", source = sort_frontier_source, legend="relevant")
+
+        axis().major_label_text_font_size = "8pt"
+
+        sort_frontier_plot = curplot()
+
+        # Sorted by Crawled
+        self.sort_crawled['relevant_rect'] = self.sort_crawled['relevant_count'].map(lambda x: x/2)
+        self.sort_crawled['frontier_rect'] = self.sort_crawled['frontier_count'].map(lambda x: x/2)
+        self.sort_crawled['crawled_rect'] = self.sort_crawled['crawled_count'].map(lambda x: x/2)
+        sort_crawled_source = ColumnDataSource(self.sort_crawled)
+
+        y_range= sort_crawled_source.data['index']
+
+        figure(plot_width=800, plot_height=500, title="Domains Sorted by Crawled urls", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
+
+        hold()
+
+        rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = sort_crawled_source, legend="frontier")
+        rect(y=y_range, x='crawled_rect', height=0.4, width='crawled_count', color="blue", fill_color="blue", source = sort_crawled_source, legend="crawled")
+        rect(y=y_range, x='relevant_rect', height=0.4, width='relevant_count', color="red", fill_color="red", source = sort_crawled_source, legend="relevant")
+
+        axis().major_label_text_font_size = "8pt"
+
+        sort_crawled_plot = curplot()
+
         show()
 
-        harvest_plot = curplot()
-
-        figure(plot_width=800, plot_height=500, title="Harvest Rate", x_axis_type='datetime', tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
-        line(x="timestamp", y="harvest_rate", fill_alpha=0.6, color="blue", width=0.2, legend="harvest_rate", source=source)
-        scatter(x="timestamp", y="harvest_rate", alpha=0, color="blue", legend="harvest_rate", source=source)
-
-        hover = curplot().select(dict(type=HoverTool))
-        hover.tooltips = OrderedDict([
-            ("harvest_rate", "@harvest_rate"),
-        ])
-        show()
-
-        harvest_rate_plot = curplot()
-
-        return harvest_plot, harvest_rate_plot
+        return sort_crawled_plot, sort_frontier_plot, sort_relevant_plot
 
