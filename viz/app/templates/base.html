@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FocusCrawlerViz</title>
+    
+    <meta name="description" content="An Open Source Focused Crawler Dashboard for Domain Specific Search with Flask-Blaze-Bokeh">
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <!--link rel="stylesheet" href="{{ SITEURL }}/theme/css/bootstrap.{{ BOOTSTRAP_THEME }}.min.css" type="text/css"/-->
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css"/>
+    <link href="{{ SITEURL }}/static/css/html4css1.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css" type="text/css"/>
+
+
+</head>
+<body>
+<!-- Wrap all page content here -->
+<div id="wrap">
+
+  <!-- Fixed navbar -->
+    <div class="navbar navbar-default navbar-fixed-top">
+          <div class="container">
+              <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">FocusCrawlerViz</a>
+              </div>
+              <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                  <li><a href="/index">Home</a></li>
+                  <li><a href="/about">About</a></li>
+                  <li><a href="/demo">Demo</a></li>
+                  <li><a href="/documentation">Documentation</a></li>
+                  <li><a href="/contact">Contact</a></li>
+                </ul>
+              </div><!--/.nav-collapse -->
+        </div>
+    </div>
+
+  <!-- Begin page content -->
+    <div class="container">
+      {% block content %}
+      {% endblock %}
+    </div>
+
+</div>
+
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<!--script src="{{ SITEURL }}/static/js/bootstrap.min.js"></script-->
+<script src="/static/js/bootstrap.min.js"></script>
+<!--JQuery-->
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="{{ SITEURL }}/static/js/respond.min.js"></script>
+</body>
+</html>

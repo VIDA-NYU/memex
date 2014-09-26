@@ -15,7 +15,7 @@ from bokeh.embed import autoload_server
 from harvest import Harvest
 from domain import Domain
 from termite import Termite
-#from handson import Handson
+#from table_urls. import Handson
 
 import requests
 from requests.exceptions import ConnectionError
@@ -23,10 +23,14 @@ from flask import Flask, render_template
 app = Flask(__name__)
 
 @app.route('/')
+def render_index():
+    return render_template('index.html')
+
+@app.route('/dashboard')
 def render_dashboard():
     #dashboard = DashBoard()
     #tag = autoload_server(dashboard.layout, dashboard.session)
-    tag1, id1 = make_snippet("animated", dashboard.layout, dashboard.session, dashboard.run)
+    tag = autoload_server(dashboard.layout, dashboard.session)
 
     html = """
     <html>
@@ -36,9 +40,10 @@ def render_dashboard():
     </body>
     </html>
     """
-    html = html % (tag1)
+    html = html % (tag)
+    #render_template('demo.html', tag=tag)
 
-    return html
+    return render_template('demo.html', tag=tag)
 
 def make_snippet(kind, plot, session=None, target=None):
     if kind == "plot":
