@@ -42,16 +42,34 @@
 
 <property>
   <name>plugin.folders</name>
-  <value>/Users/kien/git/nutch/trunk_new/runtime/local/plugins</value>
+  <value>/home/kien/git/nutch/trunk/runtime/local/plugins</value>
   <description>Directories where nutch plugins are located.  Each
   element may be a relative or absolute path.  If absolute, it is used
   as is.  If relative, it is searched for on the classpath.</description>
 </property>
 
 <property>
-  <name>scoring.conf.filename</name>
-  <value>/Users/kien/git/nutch/trunk_new/topic.cfg</value>
-  <description>path to the configuration file of the page classifier</description>
+  <name>scoring.model.filename</name>
+	<value>/home/kien/git/nutch/trunk/conf/classifier/pc.model</value>
+  <description>path to binary file of the page classifier</description>
+</property>
+
+<property>
+  <name>scoring.stoplist.filename</name>
+	<value>/home/kien/git/nutch/trunk/conf/classifier/stoplist.txt</value>
+  <description>path to the stop list used in page classifier</description>
+</property>
+
+<property>
+  <name>scoring.class.values</name>
+  <value>S NS</value>
+  <description>output values of the page classifier</description>
+</property>
+
+<property>
+  <name>scoring.feature.filename</name>
+  <value>/home/kien/git/nutch/trunk/conf/classifier/features.txt</value>
+  <description>path to the file containing list of features of the page classifier</description>
 </property>
 
 <property>
