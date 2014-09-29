@@ -176,7 +176,7 @@ class Domain(object):
         output_file('domain.html')
         y_range= self.sort_relevant_source.data['index']
 
-        figure(plot_width=800, plot_height=500, title="Domains Sorted by Relevance", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
+        figure(plot_width=400, plot_height=400, title="Domains Sorted by Relevance", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
 
         hold()
 
@@ -191,7 +191,7 @@ class Domain(object):
         # Sorted by Frontier
         y_range= self.sort_frontier_source.data['index']
 
-        figure(plot_width=800, plot_height=500, title="Domains Sorted by urls in Frontier", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
+        figure(plot_width=400, plot_height=400, title="Domains Sorted by urls in Frontier", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
 
         hold()
 
@@ -206,7 +206,7 @@ class Domain(object):
         # Sorted by Crawled
         y_range= self.sort_crawled_source.data['index']
 
-        figure(plot_width=800, plot_height=500, title="Domains Sorted by Crawled urls", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
+        figure(plot_width=400, plot_height=400, title="Domains Sorted by Crawled urls", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
 
         hold()
 

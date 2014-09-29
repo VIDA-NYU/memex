@@ -26,18 +26,17 @@ class Domain(object):
         """
         Generates the domain data (Preprocessing)
         """
-        relevant_data = 'data_monitor/relevantpages.csv'
+        relevant_data ='data_monitor/relevantpages.csv'
         crawled_data = 'data_monitor/crawledpages.csv'
         frontier_data = 'data_monitor/frontierpages.csv'
-
         # Transform the summary.txt file into a csv file with the purpose of inputing the file into Blaze-Bokeh for visualization.
         fmt ='%Y-%m-%d-%H-%M-%S-%f' 
         current_time = dt.datetime.now().strftime(fmt)
         #relevant_file = '%s_relevantpages.csv' % current_time
-        relevant_file = 'relevantpages.csv'
+        relevant_file = 'data_preprocessed/relevantpages.csv'
         with open(relevant_file, 'wb') as outfile:
             writer = unicodecsv.writer(outfile, encoding='utf-8', delimiter='\t')
-            with open(relevant_data, 'rb') as f:
+            with open(relevant_data, 'rb', buffering=1) as f:
                 reader = unicodecsv.reader(f, encoding='utf-8', delimiter='\t')
                 for row in reader:
                     try:
@@ -48,15 +47,15 @@ class Domain(object):
                         timestamp_dt = dt.datetime.fromtimestamp(int(timestamp))
                         minute_gby = group_by_minutes(timestamp_dt, minutes)
                         minute = minute_gby.strftime('%Y-%m-%d %H:%M:%S')
-                        #line = [url, domain, timestamp, minute]
-                        line = [domain, timestamp, minute]
+                        line = [url, domain, timestamp, minute]
+                        #line = [domain, timestamp, minute]
                         writer.writerow(line)
                     except csv.Error as e:
                         print 'file %s, line %d: %s' % (input_summary, reader.line_num, e)
                         pass
 
         #crawled_file = '%s_crawledpages.csv' % current_time
-        crawled_file = 'crawledpages.csv'
+        crawled_file = 'data_preprocessed/crawledpages.csv'
         with open(crawled_file, 'wb') as outfile:
             writer = unicodecsv.writer(outfile, encoding='utf-8', delimiter='\t')
             with open(crawled_data, 'rb') as f:
@@ -70,15 +69,15 @@ class Domain(object):
                         timestamp_dt = dt.datetime.fromtimestamp(int(timestamp))
                         minute_gby = group_by_minutes(timestamp_dt, minutes)
                         minute = minute_gby.strftime('%Y-%m-%d %H:%M:%S')
-                        #line = [url, domain, timestamp, minute]
-                        line = [domain, timestamp, minute]
+                        line = [url, domain, timestamp, minute]
+                        #line = [domain, timestamp, minute]
                         writer.writerow(line)
                     except csv.Error as e:
                         print 'file %s, line %d: %s' % (input_summary, reader.line_num, e)
                         pass
 
         #frontier_file = '%s_frontierpages.csv' % current_time
-        frontier_file = 'frontierpages.csv'
+        frontier_file = 'data_preprocessed/frontierpages.csv'
         with open(frontier_file, 'wb') as outfile:
             writer = unicodecsv.writer(outfile, encoding='utf-8', delimiter='\t')
             with open(frontier_data, 'rb') as f:
@@ -107,9 +106,9 @@ class Domain(object):
                         print 'file %s, line %d: %s' % (input_summary, reader.line_num, e)
                         pass
 
-        frontier_file = "frontierpages.csv"
-        crawled_file = "crawledpages.csv"
-        relevant_file = "relevantpages.csv"
+        #frontier_file = "frontierpages.csv"
+        #crawled_file = "crawledpages.csv"
+        #relevant_file = "relevantpages.csv"
         #t_frontier = Table(CSV(frontier_file, columns=["url", "domain"], encoding='utf-8'), schema= "{url: string, domain:string}")
         #t_crawled = Table(CSV(crawled_file, columns=["url", "domain", "timestamp", "minute"], encoding='utf-8'), schema = "{url: string, domain:string, timestamp:datetime, minute:datetime}")
         #t_relevant = Table(CSV(relevant_file, columns=["url", "domain", "timestamp", "minute"], encoding='utf-8'), schema ="{url: string, domain:string, timestamp:datetime, minute:datetime}")
@@ -176,7 +175,7 @@ class Domain(object):
         output_file('domain.html')
         y_range= self.sort_relevant_source.data['index']
 
-        figure(plot_width=800, plot_height=500, title="Domains Sorted by Relevance", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
+        figure(plot_width=400, plot_height=400, title="Domains Sorted by Relevance", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
 
         hold()
 
@@ -191,7 +190,7 @@ class Domain(object):
         # Sorted by Frontier
         y_range= self.sort_frontier_source.data['index']
 
-        figure(plot_width=800, plot_height=500, title="Domains Sorted by urls in Frontier", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
+        figure(plot_width=400, plot_height=400, title="Domains Sorted by urls in Frontier", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
 
         hold()
 
@@ -206,7 +205,7 @@ class Domain(object):
         # Sorted by Crawled
         y_range= self.sort_crawled_source.data['index']
 
-        figure(plot_width=800, plot_height=500, title="Domains Sorted by Crawled urls", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
+        figure(plot_width=400, plot_height=400, title="Domains Sorted by Crawled urls", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
 
         hold()
 

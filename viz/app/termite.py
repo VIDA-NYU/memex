@@ -10,7 +10,7 @@ import datetime as dt
 class Termite(object):
 
     # Draw a termite plot to visualize topics and words from an LDA.
-    def __init__(self, input_data='summary.txt'):
+    def __init__(self, input_data='data_monitor/summary.txt'):
         self.input_data = input_data
         self.data, self.source = self.update_source()
         self.plot = self.create_plot()
@@ -22,7 +22,8 @@ class Termite(object):
         # Transform the summary.txt file into a csv file with the purpose of inputing the file into Blaze-Bokeh for visualization.
         fmt ='%Y-%m-%d-%H-%M-%S-%f' 
         current_time = dt.datetime.now().strftime(fmt)
-        topics_file = '%s_topics_data.csv' % current_time
+        #topics_file = '%s_topics_data.csv' % current_time
+        topics_file = 'topics_data.csv'
         with open(topics_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=',')
             with open(self.input_data, 'rb') as f:
@@ -39,7 +40,8 @@ class Termite(object):
                     sys.exit('file %s, line %d: %s' % (self.input_data, reader.line_num, e))
 
         # Transform the summary.txt file into a csv file with the purpose of inputing the file into Blaze-Bokeh for visualization.
-        termite_file = '%s_termite_data.csv' % current_time
+        #termite_file = '%s_termite_data.csv' % current_time
+        termite_file = 'termite_data.csv'
         with open(termite_file, 'wb') as outfile:
             writer = csv.writer(outfile, delimiter=',')
             with open(self.input_data, 'rb') as f:
@@ -60,7 +62,7 @@ class Termite(object):
         return topics_file, termite_file
 
     def update_source(self):
-        topics_file, termite_file = self.generate_data(self.input_data)
+        topics_file, termite_file = self.generate_data()
         
         t = Table(CSV(termite_file, columns=['topic', 'word', 'result']))
         df = into(DataFrame, t)
@@ -104,6 +106,6 @@ class Termite(object):
 
         circle(x="topic", y="word", size="size", fill_alpha=0.6, source=self.source)
         xaxis().major_label_orientation = np.pi/3
-        show()
+        #show()
 
         return curplot()
