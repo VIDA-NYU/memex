@@ -1,37 +1,32 @@
+- Example of writing Nutch Plugin: http://wiki.apache.org/nutch/WritingPluginExample
+- Checkout nutch trunk: svn checkout https://svn.apache.org/repos/asf/nutch/
+- Use eclipse to work with nutch
+  + ant eclipse
+  + import nutch trunk to eclipse
+- Create new plugin (Follow the existing scoring plugin such as scoring-opic)
+- Add build.xm, ivy.xml, plugin.xml
+- Find dependencies for ivy.xml at: http://search.maven.org/
+- In trunk/build.xml, add the new plugin (search "opic" to see where to add new lines)
+- conf/nutch-default.xml is for default configuration of nutch; overwriting the configurations to conf/nutch-site.xml
+- Enable plugin by adding it in nutch-site.xml (key: plugin.includes)
+- Add the new plugin into default.properties
+- Add the new plugin into src/plugin/build.xml
 
-Nutch plugin
-How to write Nutch Plugin:
-ant eclipse
-import new project in eclipse
-create new plugin
-add build.xm, ivy.xml, plugin.xml
-Find dependencies here: http://search.maven.org/
-make sure src file in the right direction
-in trunk/build.xml: add new class in two positions (search scoring-filer)
-Go to nutch-default.xml if add new key, value for configuration
-Enable plugin by adding it in nutch-default.xml. key: plugin.includes
+- Instruction of how to compile and run nutch from eclipse: http://wiki.apache.org/nutch/RunNutchInEclipse
+- If you want to add a dependency library that does not exist in maven, you should do as follow:
+  + Add the library name in src/plugin/yourplugin/. Here is an example of adding weka.jar:
+   <runtime>
+      <library name="scoring-pageclassifier.jar">
+         <export name="*"/>
+      </library>
+      <library name="weka.jar"/>   
+   </runtime>
+  + Copy the library to src/plugin/yourplugin/lib
 
-‘’’
-add anything similar to scoring-opic in default.properties, src/plugin/build.xml
-‘''
-
-How to compile and run nutch from eclipse: http://wiki.apache.org/nutch/RunNutchInEclipse
-
-add agent to nutch-site.xml
-run inject
-run readdb
-./bin/nutch readdb crawldb -stats	
-run crawl: 
-	cd /Users/kien/git/nutch/trunk_new/runtime/local
-	./bin/crawl urls/ crawldb 5
-
-
-clean:
-	ant clean install
-	ant clean runtime
-check parser: 
-
-./bin/nutch parsechecker -dumpText http://www.polarisproject.org/
-read content of file
-
-./bin/nutch readseg -dump new_crawl/segments/20140924182147/ output_segment/
+- Common use commands:
+  + run crawl: ./bin/crawl urls/ crawldb 5
+  + Get stats after crawling: ./bin/nutch readdb crawldb -stats	
+  + Clean: ant clean runtime
+  + Check parser: ./bin/nutch parsechecker -dumpText http://www.polarisproject.org/
+  + Convert crawling pages into readable format: ./bin/nutch readseg -dump new_crawl/segments/20140924182147/ output
+  + See https://wiki.apache.org/nutch/CommandLineOptions to find more
