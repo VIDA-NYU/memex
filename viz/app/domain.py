@@ -36,7 +36,7 @@ class Domain(object):
         relevant_file = 'data_preprocessed/relevantpages.csv'
         with open(relevant_file, 'wb') as outfile:
             writer = unicodecsv.writer(outfile, encoding='utf-8', delimiter='\t')
-            with open(relevant_data, 'rb', buffering=1) as f:
+            with open(relevant_data, 'rb') as f:
                 reader = unicodecsv.reader(f, encoding='utf-8', delimiter='\t')
                 for row in reader:
                     try:
@@ -122,23 +122,23 @@ class Domain(object):
         df_frontier_counts = pd.DataFrame(frontier_counts)
         df_frontier_counts.columns = ['frontier_count']
 
-        df_crawled_counts = df_crawled[['domain', 'timestamp']].groupby(['domain']).count('timestamp').sort()
+        df_crawled_counts = df_crawled[['domain', 'timestamp']].groupby(['domain']).count('timestamp').sort(ascending=False)
         df_crawled_counts.columns = ['crawled_count']
 
-        df_relevant_counts = df_relevant[['domain', 'timestamp']].groupby(['domain']).count('timestamp').sort()
+        df_relevant_counts = df_relevant[['domain', 'timestamp']].groupby(['domain']).count('timestamp').sort(ascending=False)
         df_relevant_counts.columns = ['relevant_count']
 
-        df_crawled_time_evolution = df_crawled.groupby(['domain', 'minute']).count('timestamp').sort()
+        df_crawled_time_evolution = df_crawled.groupby(['domain', 'minute']).count('timestamp').sort(ascending=False)
         df_crawled_time_evolution.columns = ['relevant_time_count']
-        df_relevant_time_evolution = df_relevant.groupby(['domain', 'minute']).count('timestamp').sort()
+        df_relevant_time_evolution = df_relevant.groupby(['domain', 'minute']).count('timestamp').sort(ascending=False)
         df_relevant_time_evolution.columns = ['relevant_time_count']
 
         # Join
         a = df_frontier_counts.join(df_crawled_counts, how='outer')
         joined = a.join(df_relevant_counts, how='outer').fillna(0)
-        sort_relevant = joined.sort('relevant_count', ascending=False).head(15)
-        sort_crawled = joined.sort('crawled_count', ascending=False).head(15)
-        sort_frontier = joined.sort('frontier_count', ascending=False).head(15)
+        sort_relevant = joined.sort('relevant_count', ascending=False).head(25)
+        sort_crawled = joined.sort('crawled_count', ascending=False).head(25)
+        sort_frontier = joined.sort('frontier_count', ascending=False).head(25)
 
         return sort_relevant, sort_crawled, sort_frontier
 
@@ -149,7 +149,7 @@ class Domain(object):
         # Sorted by Relevance
         # Generate the column that calculates the center of the rectangle for the rect glyph.
         sort_relevant['relevant_rect'] = sort_relevant['relevant_count'].map(lambda x: x/2)
-        sort_relevant['frontier_rect'] = sort_relevant['frontier_count'].map(lambda x: x/2)
+        #sort_relevant['frontier_rect'] = sort_relevant['frontier_count'].map(lambda x: x/2)
         sort_relevant['crawled_rect'] = sort_relevant['crawled_count'].map(lambda x: x/2)
 
         sort_relevant_source = ColumnDataSource(sort_relevant)
@@ -173,15 +173,16 @@ class Domain(object):
     def create_plot(self, output_html='domain.html'):
 
         output_file('domain.html')
+        # Sorted by Relevance
         y_range= self.sort_relevant_source.data['index']
 
         figure(plot_width=400, plot_height=400, title="Domains Sorted by Relevance", y_range = y_range, tools='pan, wheel_zoom, box_zoom, reset, resize, save, hover')
 
         hold()
 
-        rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = self.sort_relevant_source, legend="frontier")
-        rect(y=y_range, x='crawled_rect', height=0.4, width='crawled_count', color="blue", fill_color="blue", source = self.sort_relevant_source, legend="crawled")
-        rect(y=y_range, x='relevant_rect', height=0.4, width='relevant_count', color="red", fill_color="red", source = self.sort_relevant_source, legend="relevant")
+        #rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = self.sort_relevant_source, legend="frontier")
+        rect(y=y_range, x='crawled_rect', height=0.95, width='crawled_count', color="red", fill_color="red", source = self.sort_relevant_source, legend="crawled")
+        rect(y=y_range, x='relevant_rect', height=0.95, width='relevant_count', color="blue", fill_color="blue", source = self.sort_relevant_source, legend="relevant")
 
         axis().major_label_text_font_size = "8pt"
 
@@ -194,9 +195,9 @@ class Domain(object):
 
         hold()
 
-        rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = self.sort_frontier_source, legend="frontier")
-        rect(y=y_range, x='crawled_rect', height=0.4, width='crawled_count', color="blue", fill_color="blue", source = self.sort_frontier_source, legend="crawled")
-        rect(y=y_range, x='relevant_rect', height=0.4, width='relevant_count', color="red", fill_color="red", source = self.sort_frontier_source, legend="relevant")
+        rect(y=y_range, x='frontier_rect', height=0.95, width='frontier_count', color="grey", fill_color="grey", source = self.sort_frontier_source, legend="frontier")
+        rect(y=y_range, x='crawled_rect', height=0.95, width='crawled_count', color="red", fill_color="red", source = self.sort_frontier_source, legend="crawled")
+        #rect(y=y_range, x='relevant_rect', height=1, width='relevant_count', color="blue", fill_color="blue", source = self.sort_frontier_source, legend="relevant")
 
         axis().major_label_text_font_size = "8pt"
 
@@ -209,9 +210,9 @@ class Domain(object):
 
         hold()
 
-        rect(y=y_range, x='frontier_rect', height=0.4, width='frontier_count', color="grey", fill_color="grey", source = self.sort_crawled_source, legend="frontier")
-        rect(y=y_range, x='crawled_rect', height=0.4, width='crawled_count', color="blue", fill_color="blue", source = self.sort_crawled_source, legend="crawled")
-        rect(y=y_range, x='relevant_rect', height=0.4, width='relevant_count', color="red", fill_color="red", source = self.sort_crawled_source, legend="relevant")
+        rect(y=y_range, x='frontier_rect', height=1, width='frontier_count', color="grey", fill_color="grey", source = self.sort_crawled_source, legend="frontier")
+        rect(y=y_range, x='crawled_rect', height=1, width='crawled_count', color="blue", fill_color="blue", source = self.sort_crawled_source, legend="crawled")
+        rect(y=y_range, x='relevant_rect', height=1, width='relevant_count', color="red", fill_color="red", source = self.sort_crawled_source, legend="relevant")
 
         axis().major_label_text_font_size = "8pt"
 
