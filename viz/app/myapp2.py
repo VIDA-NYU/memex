@@ -60,7 +60,7 @@ def index():
 
 
 # Create admin
-admin = admin.Admin(app, 'CrawledUrls')
+admin = admin.Admin(app, 'FocusCrawlerVIz')
 
 # Add views
 admin.add_view(UrlView(db.session))
