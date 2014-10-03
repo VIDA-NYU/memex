@@ -19,7 +19,9 @@ def generate_harvest():
 
 class Harvest(object):
 
-    def __init__(self, input_data='data_monitor/harvestinfo.csv'):
+    def __init__(self, path):
+        input_data = path + '/harvestinfo.csv'
+
         self.harvest_data = input_data
         self.source = self.update_source()
         self.plot, self.rate_plot = self.create_plot()

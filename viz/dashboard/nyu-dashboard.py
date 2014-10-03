@@ -1,5 +1,5 @@
 from __future__ import print_function
-
+import sys
 import time
 from threading import Thread
 
@@ -58,7 +58,7 @@ def make_snippet(kind, plot, session=None, target=None):
 
 class DashBoard(object):
 
-    def __init__(self):
+    def __init__(self, path):
         self.document = Document()
         self.session = Session()
         self.session.use_doc('crawler_dashboard')
@@ -70,9 +70,8 @@ class DashBoard(object):
         #self.domain_frontier_source = ColumnDataSource(data=dict())
         #self.handson_source = ColumnDataSource(data=dict())
         #self.termite_source = ColumnDataSource(data=dict())
-
-        self.harvest = Harvest()
-        self.domain = Domain()
+        self.harvest = Harvest(path)
+        self.domain = Domain(path)
         #handson = Handson()
         self.termite = Termite()
 
@@ -122,6 +121,10 @@ class DashBoard(object):
 
 
 if __name__ == "__main__":
-    dashboard = DashBoard()
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
+    else:
+        path = "data_monitor/" #default path
+    dashboard = DashBoard(path)
     dashboard.render()
     app.run(debug=True)

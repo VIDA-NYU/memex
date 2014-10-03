@@ -18,7 +18,9 @@ def group_by_minutes(d, minutes):
 
 class Domain(object):
 
-    def __init__(self):
+    def __init__(self, path):
+        self.path = path
+
         self.sort_relevant_source, self.sort_crawled_source, self.sort_frontier_source = self.update_source()
         self.sort_relevant_plot, self.sort_crawled_plot, self.sort_frontier_plot  = self.create_plot()
 
@@ -26,9 +28,9 @@ class Domain(object):
         """
         Generates the domain data (Preprocessing)
         """
-        relevant_data = 'data_monitor/relevantpages.csv'
-        crawled_data = 'data_monitor/crawledpages.csv'
-        frontier_data = 'data_monitor/frontierpages.csv'
+        relevant_data = self.path + '/relevantpages.csv'
+        crawled_data = self.path + '/crawledpages.csv'
+        frontier_data = self.path + '/frontierpages.csv'
 
         # Transform the summary.txt file into a csv file with the purpose of inputing the file into Blaze-Bokeh for visualization.
         fmt ='%Y-%m-%d-%H-%M-%S-%f' 
