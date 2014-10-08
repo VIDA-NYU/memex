@@ -58,9 +58,9 @@ def make_snippet(kind, plot, session=None, target=None):
 
 class DashBoard(object):
 
-    def __init__(self, path):
+    def __init__(self, path, url):
         self.document = Document()
-        self.session = Session()
+        self.session = Session(name=url, root_url=url)
         self.session.use_doc('crawler_dashboard')
         self.session.load_document(self.document)
 
@@ -123,8 +123,13 @@ class DashBoard(object):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         path = sys.argv[1]
+        if len(sys.argv) > 2:
+          url = sys.argv[2]
+        else:
+          url = "http://localhost:5006" #default host port
     else:
         path = "data_monitor/" #default path
-    dashboard = DashBoard(path)
+        
+    dashboard = DashBoard(path, url)
     dashboard.render()
     app.run(debug=True)
