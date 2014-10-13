@@ -7,12 +7,13 @@ import java.lang.String;
 import java.net.URLDecoder;
 
 public class Extract {
-//  static String path;
   private HashMap<String, String> m;
+  private HashMap<String, ArrayList<String>> contentMap; //keeps file paths for documents with same content
 
   public Extract()
   {
     m = new HashMap<String, String>();
+    contentMap = new HashMap<String, ArrayList<String>>();
   }  
   private String readFile(String pathname) throws IOException {
     File file = new File(pathname);
@@ -29,26 +30,44 @@ public class Extract {
     }
   }
 
+  private void deduplicateContent() {
+    try {
+      Runtime r = Runtime.getRuntime();
+      Process p;
+      for(String c: contentMap.keySet()) {
+        List<String> tmp = contentMap.get(c);
+        if(tmp.size() > 1) {
+          int size = tmp.size();
+          for(String s: tmp) {
+            if(size == 1) break;
+            p = r.exec("rm " + s);
+            p.waitFor();
+            size--;
+          }
+          System.out.println("**");
+        }
+      }
+    } 
+    catch(IOException e1) {}
+    catch(InterruptedException e2) {}	
+  }
+
   public  void  process(File f, String url)
   {
     try{
-/*
-      File outputfile = new File(path + "/" + f.getName());
-      
-      if (!outputfile.exists()){
-        PrintWriter writer = new PrintWriter(outputfile.getPath(), "UTF-8");
-        String content = readFile(f.getPath());
-        writer.print(ArticleExtractor.INSTANCE.getText(content));;
-        writer.close();
-*/
-        if (m.containsKey(url))
-        {
+          //System.out.println(f.getPath());
           String content = readFile(f.getPath());
           content = ArticleExtractor.INSTANCE.getText(content);
           content = content.trim().replaceAll(" +", " ");
           content = content.replaceAll("[\n\"\t]", " ");
-          System.out.println(url + "\t" + m.get(url) + "\t" + content);
-        }
+          if(contentMap.containsKey(content)) {
+	    contentMap.get(content).add(f.getPath());
+          } else {
+            contentMap.put(content, new ArrayList<String>());
+            contentMap.get(content).add(f.getPath());
+          }
+	  deduplicateContent();
+          //System.out.println(url + "\t" + m.get(url) + "\t" + content);
     }
     catch(Exception e){
       System.out.println("process Exception");
@@ -60,7 +79,6 @@ public class Extract {
         if (fileEntry.isDirectory()) {
             listFiles(fileEntry);
         } else {
-            //System.out.println);
             process(fileEntry, URLDecoder.decode(fileEntry.getName()));
         }
     }
@@ -95,13 +113,8 @@ public class Extract {
   public static void main(String[] args) {
     try{
           String inputpath = args[0];
-//          path = args[1];
-          String timestampfile = args[1];
-
-    
           File folder = new File(inputpath);
           Extract e = new Extract();
-          e.getTimestamp(timestampfile);
           e.listFiles(folder);
     } catch(Exception e){
       System.out.println("Exception");
