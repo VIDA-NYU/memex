@@ -1,0 +1,43 @@
+
+<html>
+<head>
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" type="text/css"/>
+    <link href="{{ SITEURL }}/static/css/html4css1.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css" type="text/css"/>
+</head>
+<body>
+<div id="wrap">
+  <!-- Fixed navbar -->
+    <div class="navbar navbar-default navbar-fixed-top">
+          <div class="container">
+              <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">FocusCrawlerViz</a>
+              </div>
+              <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                  <li><a href="/index">Home</a></li>
+                  <li><a href="/about">About</a></li>
+                  <li><a href="/dashboard">Dashboard</a></li>
+                  <li><a href="/tables">Tables</a></li>
+                  <li><a href="/documentation">Documentation</a></li>
+                  <li><a href="/contact">Contact</a></li>
+                </ul>
+              </div><!--/.nav-collapse -->
+        </div>
+    </div>
+
+  <!-- Begin page content -->
+
+<div>
+{{ tag | safe }}
+</div>
+</div>
+<script src="/static/js/bootstrap.min.js"></script>
+</body>
+</html>

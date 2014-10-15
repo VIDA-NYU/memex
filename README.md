@@ -1,3 +1,3 @@
 memexcrawler
 ============
-Collaboration between NYU and Coninuum in Memex Project funded by DARPA.
+Collaboration between NYU and Continuum Analytics in Memex Project funded by DARPA.
