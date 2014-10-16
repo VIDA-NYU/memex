@@ -28,7 +28,8 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.StringTokenizer;
 import java.util.Vector;
-
+import java.util.HashMap;
+import java.util.ArrayList;
 
 
 import focusedCrawler.link.classifier.LinkClassifier;
@@ -61,6 +62,11 @@ public class BipartiteGraphManager {
 	private BipartiteGraphRep rep;
 	
 	private int count = 0;
+
+  //Data structure for stop conditions //////////////////////////
+  private int maxPages = 100; //Maximum number of pages per each domain
+  private HashMap<String, Integer> domainCounter;//Count number of pages for each domain
+  ///////////////////////////////////////////////////////////////
 	
 	private final int pagesToCommit = 100;
 	
@@ -68,6 +74,7 @@ public class BipartiteGraphManager {
 		this.frontierManager = frontierManager;
 		this.outlinkClassifier = outlinkClassifier;
 		this.rep = rep;
+    this.domainCounter = new HashMap<String, Integer>();
 	}
 	
 	public BipartiteGraphManager(FrontierManager frontierManager, BipartiteGraphRep rep, LinkClassifier outlinkClassifier, LinkClassifier backlinkClassifier) throws IOException, ClassNotFoundException{
@@ -75,7 +82,12 @@ public class BipartiteGraphManager {
 		this.outlinkClassifier = outlinkClassifier;
 		this.backlinkClassifier = backlinkClassifier;
 		this.rep = rep;
+    this.domainCounter = new HashMap<String, Integer>();
 	}
+
+  public void setMaxPages(int max){
+    this.maxPages = max;
+  }
 
 	public void setBacklinkSurfer(BacklinkSurfer surfer){
 		this.surfer = surfer;
@@ -99,14 +111,28 @@ public class BipartiteGraphManager {
 		PaginaURL parsedPage = page.getPageURL();
 		parsedPage.setRelevance(page.getRelevance());
 		LinkRelevance[] linksRelevance = outlinkClassifier.classify(parsedPage);
+    ArrayList<LinkRelevance> temp = new ArrayList<LinkRelevance>();
 		HashSet<String> relevantURLs = new HashSet<String>();
 		for (int i = 0; i < linksRelevance.length; i++) {
 			if(frontierManager.isRelevant(linksRelevance[i])){
 				String url = linksRelevance[i].getURL().toString();
-				relevantURLs.add(url);
-				outLinks += "\t" + url;
+        if(!relevantURLs.contains(url)){
+          String domain = linksRelevance[i].getDomainName();
+          Integer domainCount = domainCounter.get(domain);
+          if (domainCount == null)
+            domainCount = 0;
+          if (domainCount < maxPages){
+            domainCount++;
+            domainCounter.put(domain, domainCount);
+				    relevantURLs.add(url);
+            temp.add(linksRelevance[i]);
+				    outLinks += "\t" + url;
+          }
+        }
 			}
 		}
+    
+    LinkRelevance[] filteredLinksRelevance = temp.toArray(new LinkRelevance[relevantURLs.size()]);
 		LinkNeighborhood[] lns = parsedPage.getLinkNeighboor();
 		for (int i = 0; i < lns.length; i++) {
 			if(!relevantURLs.contains(lns[i].getLink().toString())){
@@ -114,7 +140,7 @@ public class BipartiteGraphManager {
 			}
 		}
 		rep.insertOutlinks(page.getURL(), lns);
-		frontierManager.insert(linksRelevance);
+		frontierManager.insert(filteredLinksRelevance);
 		if(count == pagesToCommit){
 			rep.commit();
 			count = 0;
