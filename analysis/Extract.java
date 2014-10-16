@@ -59,7 +59,13 @@ public class Extract {
           String content = readFile(f.getPath());
           content = ArticleExtractor.INSTANCE.getText(content);
           content = content.trim().replaceAll(" +", " ");
-          content = content.replaceAll("[\n\"\t]", " ");
+          content = content.replaceAll("[\n\"\t]", " ").toLowerCase();
+
+          //the if below helps to identify false positives by printing them so one can analyse them manually
+          if(!content.matches("(.*)sex(.*)") && !content.matches("(.*)traffick(.*)") && !content.matches("(.*)exploitation(.*)") && !content.matches("(.*)slave(.*)") && !content.matches("(.*)prostitution(.*)") && !content.matches("(.*)labor(.*)") && !content.matches("(.*)organ(.*)") && !content.matches("(.*)forced marriage(.*)")) {
+            System.out.println(f.getPath() + "\n" + content + "\n");
+          }
+
           if(contentMap.containsKey(content)) {
 	    contentMap.get(content).add(f.getPath());
           } else {
