@@ -26,7 +26,7 @@ def valid_words(text):
 
 
 #KEY = re.compile("sex|woman|labor|slavery|slave|prostitution|organ|child|trafficking|forced")
-KEY = re.compile("sex")#|woman|labor|slavery|slave|prostitution|organ|child|trafficking|forced")
+KEY = re.compile("sex|woman|labor|slavery|slave|prostitution|organ|child|trafficking|forced")
 def check_key_terms(content):
   content = content.lower()
   if KEY.search(content):
