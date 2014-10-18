@@ -14,7 +14,6 @@ def get_language(text):
     words = set(nltk.wordpunct_tokenize(text.lower()))
     return max(((lang, len(words & stopwords)) for lang, stopwords in STOPWORDS_DICT.items()), key = lambda x: x[1])[0]
  
- 
 def is_english(text):
     text = text.lower()
     words = set(nltk.wordpunct_tokenize(text))
@@ -24,16 +23,23 @@ def valid_words(text):
     words = text.split(' ')
     filtered = [w for w in words if not w.lower() in ENGLISH_STOPWORDS]
     return " ".join(filtered)
-'''
-KEY = re.compile("sex|woman|labor|slave|prostitution|organ|child|traffic|force")
+
+
+#KEY = re.compile("sex|woman|labor|slavery|slave|prostitution|organ|child|trafficking|forced")
+KEY = re.compile("sex|woman|labor|slavery|slave|prostitution|organ|child|trafficking|forced")
 def check_key_terms(content):
   content = content.lower()
   if KEY.search(content):
     content = content.replace("\n", " ")
     return content
   else:
+    paragraphs = content.split("\n")
+    for p in paragraphs:
+      if not KEY.search(p):
+        print p
+    #print content
     return ""
-'''
+
 
 def get_all_files(dirname):
   print "Loading all filenames"
@@ -44,26 +50,27 @@ def get_all_files(dirname):
   print "Done loading filenes", len(files)
   return files
 
-#dirname = sys.argv[1]
-#files = get_all_files(dirname)
-output = open(sys.argv[1], "w")
+dirname = sys.argv[1]
+files = get_all_files(dirname)
+#output = open(sys.argv[1], "w")
 len_count = 0 #Count number of documents have less than 100 characters
 en_count = 0 #Count number of documents that are not written in English
 count = 0
-#for file in files:
-for content in sys.stdin:
+for file in files:
+#for content in sys.stdin:
   if (count % 1000) == 0:
-    #print "all count:\t" + str(count) + "\tenglish count:\t" + str(en_count) + "\tless-100 count:\t" + str(len_count) 
-    print "all count:\t" + str(count) + "\tless-100 count:\t" + str(len_count) 
+    print "all count:\t" + str(count) + "\tenglish count:\t" + str(en_count) + "\tless-100 count:\t" + str(len_count) 
+    #print "all count:\t" + str(count) + "\tless-100 count:\t" + str(len_count) 
   count += 1
-  #content = open(file).read().replace("\"", "")
-  #content = content.replace("\n", " ") 
-  content = content.strip("\n")
-  url, timestamp, text = content.split("\t")
-#  if is_english(text):
-  text = valid_words(text)
-  #en_count += 1
-  if len(text) > 100:
-    len_count += 1
-    output.write(url + "\t" + timestamp + ",\"" + text + "\"\n")
-output.close()
+  content = open(file).read().replace("\"", "")
+  content = content.replace("\n", " ") 
+  #content = content.strip("\n")
+  #url, timestamp, text = content.split("\t")
+  if is_english(content):
+    text = valid_words(content)
+    en_count += 1
+    if len(text) > 100:
+      text = check_key_terms(text)
+      len_count += 1
+    #output.write(url + "\t" + timestamp + ",\"" + text + "\"\n")
+#output.close()
