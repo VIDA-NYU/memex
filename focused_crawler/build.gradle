@@ -1,0 +1,45 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+
+repositories {
+    // TODO all of the things in lib, should come from here
+    mavenCentral()
+}
+
+dependencies {
+    // TODO fill these in from Maven Central instead of that local libs dir
+    compile 'com.google.guava:guava:18.0'
+    compile 'nekohtml:nekohtml:0.9.5'
+    compile 'org.eclipse.birt.runtime.3_7_1:org.w3c.css.sac:1.3.0'
+
+    // TODO recommend replacing these with:
+    // compile 'com.cybozu.labs:langdetect:1.1-20120112'
+    compile files('libs/jsonic-1.2.0.jar') // recommend updating this, it's for langdetect.jar
+    compile files('libs/langdetect.jar') // TODO what version is this?
+
+    compile files('libs/weka.jar') // TODO this seems to be 3.6.2, recommend using this:
+    // compile 'nz.ac.waikato.cms.weka:weka-stable:3.6.11'
+
+    // TODO fix this xerces dependency mess
+//    compile files('libs/xerces-2.9.1.jar')
+//    compile files('libs/xml-apis.jar')      // TODO what version is this?
+//    compile files('libs/xmlParserAPIs.jar') // TODO what version is this?
+//    compile files('libs/xercesImpl.jar')    // TODO what version is this?
+
+    compile files('libs/juniversalchardet-1.0.3.jar')
+    compile files('libs/htmlunit-2.8.jar')
+    compile files('libs/commons-codec-1.9.jar')
+    compile files('libs/lucene-core-3.5.0.jar')
+    compile files('libs/je-3.3.75.jar')
+    compile files('libs/boilerpipe-1.2.0.jar')
+}
+
+/*
+tasks.withType(Compile) {
+    // TODO is this necessary?
+    options.encoding = "ISO-8859-1"
+}
+*/
+
+// TODO create binary for running focusedCrawler.link.LinkStorage, focusedCrawler.crawler.CrawlerManager, focusedCrawler.link.frontier.AddSeeds

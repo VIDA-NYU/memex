@@ -1,7 +1,9 @@
 DIRECTORY=$1 #Directory that contain training examples. it should have two subdirectories: positive and negative
 OUTPUT=$2 #output directory
 mkdir -p $OUTPUT
-java -cp "class/:libs/weka.jar" focusedCrawler.target.CreateWekaInput conf/target_storage/target_storage.cfg ${DIRECTORY} ${DIRECTORY}/weka.arff
+# java -cp "class/:libs/weka.jar" focusedCrawler.target.CreateWekaInput conf/target_storage/target_storage.cfg ${DIRECTORY} ${DIRECTORY}/weka.arff
+java -cp "build/classes/main/:libs/weka.jar" focusedCrawler.target.CreateWekaInput conf/target_storage/target_storage.cfg ${DIRECTORY} ${DIRECTORY}/weka.arff
+
 java -cp libs/weka.jar weka.classifiers.functions.SMO -M -d ${OUTPUT}/pageclassifier.model -t ${DIRECTORY}/weka.arff
 echo "CLASS_VALUES  S NS" > ${OUTPUT}/pageclassifier.features
 echo -n "ATTRIBUTES " >> ${OUTPUT}/pageclassifier.features

@@ -9,4 +9,5 @@ else
     SEED_PATH='conf/seeds/ht.seeds'
 fi
 
-java -cp class:libs/je-3.3.75.jar focusedCrawler.link.frontier.AddSeeds $CONFIG_PATH $SEED_PATH
+# java -cp class:libs/je-3.3.75.jar focusedCrawler.link.frontier.AddSeeds $CONFIG_PATH $SEED_PATH
+java -cp build/classes/main:libs/je-3.3.75.jar focusedCrawler.link.frontier.AddSeeds $CONFIG_PATH $SEED_PATH
