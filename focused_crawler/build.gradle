@@ -7,6 +7,7 @@ repositories {
     mavenCentral()
 }
 
+
 dependencies {
     // TODO fill these in from Maven Central instead of that local libs dir
     compile 'com.google.guava:guava:18.0'
@@ -16,16 +17,15 @@ dependencies {
     // TODO recommend replacing these with:
     // compile 'com.cybozu.labs:langdetect:1.1-20120112'
     compile files('libs/jsonic-1.2.0.jar') // recommend updating this, it's for langdetect.jar
-    compile files('libs/langdetect.jar') // TODO what version is this?
+    compile files('libs/langdetect-03-03-2014.jar') // TODO why isn't this in maven central
 
-    compile files('libs/weka.jar') // TODO this seems to be 3.6.2, recommend using this:
+    compile files('libs/weka-3.6.2.jar') 
+    // recommend using this:
     // compile 'nz.ac.waikato.cms.weka:weka-stable:3.6.11'
 
     // TODO fix this xerces dependency mess
-//    compile files('libs/xerces-2.9.1.jar')
-//    compile files('libs/xml-apis.jar')      // TODO what version is this?
-//    compile files('libs/xmlParserAPIs.jar') // TODO what version is this?
-//    compile files('libs/xercesImpl.jar')    // TODO what version is this?
+    compile files('libs/xerces-2.9.1.jar')
+    compile files('libs/xercesImpl-2.5.0.jar')
 
     compile files('libs/juniversalchardet-1.0.3.jar')
     compile files('libs/htmlunit-2.8.jar')
