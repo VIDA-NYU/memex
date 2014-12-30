@@ -421,7 +421,57 @@ class TargetStorageLog(NotCacheable, Module):
         self.logging.annotate(self, {'result': output})
         self.set_output('result', output)
 
+class RunLDA(NotCacheable, Module):
+    """ RunLDA computes LDA and returns summary
+    """
+    _settings = ModuleSettings(namespace='analysis')
+    _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
+    _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
+                     ('summary', '(basic:String)')]
+
+    def compute(self):
+        crawler = self.get_input('crawler')
+        self.set_output('crawler', crawler)
+        queue = crawler['queue']
+
+        lda_dir = posixpath.join(crawler['bin_path'], '..', 'analysis', 'lda_pipeline')
+
+        cd = "cd %s" % lda_dir
+
+        # remove old lda_input.csv*
+        queue.check_output("%s; rm -rf %s*" % (cd,
+                           posixpath.join(crawler['data_dir'], 'lda_input.csv')))
+
+        # remove old result
+        queue.check_output("%s; rm -rf %s" % (cd,
+                            posixpath.join('lda-result')))
+
+        STEPS = 4
+
+        print queue.check_output("which python")
+        queue.check_output("%s; sh compile_Extract.sh" % cd)
+        self.logging.update_progress(self, 1.0/STEPS)
+
+
+        output = queue.check_output("%s; java -cp .:lib/boilerpipe-1.2.0.jar:lib/nekohtml-1.9.13.jar:lib/xerces-2.9.1.jar Extract %s %s | python concat_nltk.py %s" %
+                                (cd,
+                                 posixpath.join(crawler['data_dir'], 'data_target'),
+                                 posixpath.join(crawler['data_dir'], 'data_monitor', 'relevantpages.csv'),
+                                 posixpath.join(crawler['data_dir'], 'lda_input.csv')))
+        self.logging.update_progress(self, 2.0/STEPS)
+
+        output = queue.check_output("%s; java -jar lib/tmt-0.4.0.jar ht.scala %s" %
+                                       (cd, posixpath.join(crawler['data_dir'], 'lda_input.csv')))
+        self.logging.update_progress(self, 3.0/STEPS)
+
+        output = queue.check_output("%s; cat %s" %
+                                       (cd, posixpath.join('lda-result', '00500', 'summary.txt')))
+        self.logging.update_progress(self, 1.0)
+
+        self.logging.annotate(self, {'summary': output})
+        self.set_output('summary', output)
+
 _modules = [Crawler, CreateCrawler, StartCrawler, StopCrawler, CrawlerStatus,
             CrawledPages, FrontierPages, HarvestInfo, NonRelevantPages,
             OutLinks, RelevantPages, CrawlerLog, LinkStorageLog,
-            TargetStorageLog]
+            TargetStorageLog, RunLDA]
