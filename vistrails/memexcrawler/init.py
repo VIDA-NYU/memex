@@ -56,7 +56,7 @@ class CreateCrawler(NotCacheable, Module):
     _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
                     ('seed_file', '(basic:File)'),
                     ('model_examples', '(basic:Directory)')]
-    _output_ports = []
+    _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
 
     def compute(self):
         crawler = self.get_input('crawler')
@@ -108,6 +108,72 @@ class CreateCrawler(NotCacheable, Module):
 
         self.logging.update_progress(self, 1.0)
         # done, ready to start
+        self.set_output('crawler', crawler)
+
+class AddSeed(NotCacheable, Module):
+    """ AddSeed adds seeds from a file
+
+    """
+    _settings = ModuleSettings(namespace='modify')
+    _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
+                    ('seed_file', '(basic:File)')]
+    _output_ports = []
+
+    def compute(self):
+        crawler = self.get_input('crawler')
+        queue = crawler['queue']
+
+        STEPS = 2
+
+        cd = 'cd %s' % crawler['bin_path']
+
+        # Insert seeds
+        scp_client = scp.SCPClient(queue.get_client().get_transport())
+        scp_client.put(self.get_input('seed_file').name,
+                       crawler['seeds_file'])
+        self.logging.update_progress(self, 1.0/STEPS)
+        queue.check_call('%s; %s %s %s %s' % (cd,
+                                              crawler['insert_seeds'],
+                                              crawler['conf_dir'],
+                                              crawler['seeds_file'],
+                                              crawler['data_dir']))
+        self.logging.update_progress(self, 1.0)
+        self.set_output('crawler', crawler)
+
+class UpdateModel(NotCacheable, Module):
+    """ UpdateModel rebuilds the model from a directory of examples
+
+    """
+    _settings = ModuleSettings(namespace='modify')
+    _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
+                    ('model_examples', '(basic:Directory)')]
+    _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
+
+    def compute(self):
+        crawler = self.get_input('crawler')
+        queue = crawler['queue']
+
+        model_examples = self.get_input('model_examples').name
+
+        STEPS = 3
+
+        cd = 'cd %s' % crawler['bin_path']
+
+        # Clear model directory
+        queue.check_call('rm -rf %s/*' % crawler['model_dir'])
+        self.logging.update_progress(self, 1.0/STEPS)
+
+        # Create model
+        scp_client = scp.SCPClient(queue.get_client().get_transport())
+        scp_client.put(model_examples, crawler['examples_dir'], recursive=True)
+        self.logging.update_progress(self, 2.0/STEPS)
+        queue.check_call('%s; %s %s %s' % (cd,
+                                           crawler['build_model'],
+                                           crawler['examples_dir'],
+                                           crawler['model_dir']))
+
+        self.logging.update_progress(self, 1.0)
+        self.set_output('crawler', crawler)
 
 class StartCrawler(NotCacheable, Module):
     """ StartCrawler starts the crawler at ~/.crawler/CRAWLERNAME/
@@ -128,8 +194,8 @@ class StartCrawler(NotCacheable, Module):
         crawlers = self.get_input('num_crawlers')
         STEPS = 3 + crawlers
 
-        # Stop crawler
-        # We remove the process itself with 'sh -c'
+        # Stop crawler first
+        # We remove the process itself by looking for 'kill'
         print queue._call("kill $(ps aux | grep %s | grep -v 'grep' "
                           "| grep -v 'kill' | awk '{print $2}')" %
                           crawler['long_name'], True)
@@ -139,7 +205,7 @@ class StartCrawler(NotCacheable, Module):
                                 crawler['long_name'], True)
         if output.strip():
             raise ModuleError(self, 'Some instances are still running, wait a'
-                                    'while and try again.\n%s' % output)
+                                    'few seconds and try again.\n%s' % output)
         self.logging.update_progress(self, 1.0/STEPS)
 
         # Run link storage
@@ -150,6 +216,7 @@ class StartCrawler(NotCacheable, Module):
                                            crawler['data_dir'],
                                            crawler['long_name']))
         self.logging.update_progress(self, 2.0/STEPS)
+
         # Run target storage
         queue.check_call('%s; %s %s %s %s %s' % (cd,
                                            crawler['run_target_storage'],
@@ -474,4 +541,4 @@ class RunLDA(NotCacheable, Module):
 _modules = [Crawler, CreateCrawler, StartCrawler, StopCrawler, CrawlerStatus,
             CrawledPages, FrontierPages, HarvestInfo, NonRelevantPages,
             OutLinks, RelevantPages, CrawlerLog, LinkStorageLog,
-            TargetStorageLog, RunLDA]
+            TargetStorageLog, RunLDA, AddSeed, UpdateModel]
