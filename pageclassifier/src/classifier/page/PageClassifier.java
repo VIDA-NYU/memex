@@ -126,14 +126,18 @@ public class PageClassifier {
 	public static void main(String[] args) {
   		try{
   			PageClassifier classifier = PageClassifier.loadClassifier(args[0]);
+		long startTime = System.currentTimeMillis();
+		for (int i = 0; i< 1000; i++){
         File file = new File(args[1]);
         FileInputStream fis = new FileInputStream(file);
         byte[] data = new byte[(int)file.length()];
         fis.read(data);
         fis.close();
         String s = new String(data, "UTF-8");
-        double prob = classifier.classify(s)[0];
-        System.out.println(String.valueOf(prob));        
+        double prob = classifier.classify(s)[0];}
+		long stopTime = System.currentTimeMillis();
+		System.out.println(stopTime-startTime);
+		//System.out.println(String.valueOf(prob));        
   		}catch(Exception ex){
   			ex.printStackTrace();
   		}

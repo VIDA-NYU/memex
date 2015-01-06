@@ -61,6 +61,7 @@ class DashBoard(object):
     def __init__(self, path, url):
         self.document = Document()
         self.session = Session(name=url, root_url=url)
+        #self.session = Session('load_from_config=False')
         self.session.use_doc('crawler_dashboard')
         self.session.load_document(self.document)
 
@@ -73,7 +74,7 @@ class DashBoard(object):
         self.harvest = Harvest(path)
         self.domain = Domain(path)
         #handson = Handson()
-        self.termite = Termite()
+        #self.termite = Termite()
 
         self.document.add(self.create_layout())
         self.session.store_document(self.document)
@@ -92,7 +93,7 @@ class DashBoard(object):
         domains = VBox(children=[self.domain.sort_relevant_plot, self.domain.sort_crawled_plot, self.domain.sort_frontier_plot], width=200)   
         #middle_panel = HBox(children=[domains, handson.plot])
         middle_panel = HBox(children=[domains])
-        layout = VBox(children=[top_panel, middle_panel, self.termite.plot])
+        layout = VBox(children=[top_panel, middle_panel])
         self.layout = layout
         return layout
 
@@ -100,7 +101,7 @@ class DashBoard(object):
 
         self.harvest.source = self.harvest.update_source()
         self.domain.sort_relevant_source, self.domain.sort_crawled_source, self.domain.sort_frontier_source = self.domain.update_source()
-        self.termite.data, self.termite.source = self.termite.update_source()
+        #self.termite.data, self.termite.source = self.termite.update_source()
         #self.session.store_objects(ds)
         self.session.store_document(self.document)
 
@@ -133,3 +134,5 @@ if __name__ == "__main__":
     dashboard = DashBoard(path, url)
     dashboard.render()
     app.run(debug=True)
+    #app.run(debug=True, host='http://128.238.182.77', port=5006)
+    #app.run(debug=True, host='128.238.182.77', port=5006)
