@@ -102,11 +102,57 @@ def wordclouds_to_bokeh(wordclouds):
     plt.show(p)
 
 
-def remove_stopwords(text):
-    pass
+def interesting_words(lsa):
+    lsa_df = pd.DataFrame.from_dict(lsa.concepts)
+    res = []
+    for row, series in lsa_df.iterrows():
+        series.sort(ascending=False)
+        print series[0]
+        if series[0] <= 1e-8:
+            print "in pass"
+            continue
+        res.append(series.head(3))
+    res_df = pd.DataFrame(res).transpose()
+    res_df.fillna(0, inplace=True)
+    return res_df
+
+
+def bokeh_lsa(df):
+    topics = [str(a) for a in df.columns]
+    words = [str(a) for a in df.index]
+    p = plt.figure(x_range=topics, y_range=words,
+           plot_width=1000, plot_height=1700,
+           title="Termite Plot", tools='resize, save')
+
+    plot_sizes = []
+    plot_topic = []
+    plot_word = []
+    for word, coeff in df.iterrows():
+        for n, c in enumerate(coeff):
+            if c < 0:
+                plot_sizes.append(1000* coeff)
+                plot_topic.append(n)
+                plot_word.append(word)
+
+    plt.output_file("foo.html")
+    p.circle(x=plot_topic, y=plot_word, size=plot_sizes, fill_alpha=0.6)
+    plt.show(p)
+
+    return plt.curplot()
+
+
+def main_wordclouds():
+    df = read_file()
+    generate_annual_wordcloud_images(df, "abstract")
+    generate_annual_wordcloud_images(df, "title")
+
+
+def main_example():
+    df = read_sample(100)
+    lsas = get_lsa_by_year(df)
+    lsa_df = interesting_words(lsas[lsas.index[0]])
+    bokeh_lsa(lsa_df)
+
 
 if __name__ == "__main__":
-    pass
-    #df = read_file()
-    # generate_annual_wordcloud_images(df, "abstract")
-    #generate_annual_wordcloud_images(df, "title")
+    main_example()
