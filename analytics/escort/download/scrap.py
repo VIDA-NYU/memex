@@ -7,6 +7,7 @@
 # Filter the urls that are not in English
 #   python scrap.py <path_to_url_list_file> url <output_filename>"
 
+import os
 import urllib2
 import sys
 import re
@@ -43,6 +44,11 @@ def extract_text(html_content):
     print "Exception in html extraction"
     return None
 
+def download_html_content_no_check_english_all(dir, path):
+    for root, dirs, files in os.walk(dir):
+        for name in files:
+            download_html_content_no_check_english(os.path.join(root,name), path)
+
 def download_html_content_no_check_english(filename, path):
   """ This function downloads page source and saves it to file
       Input: a file containing list of urls
@@ -52,11 +58,14 @@ def download_html_content_no_check_english(filename, path):
     for line in lines:
       try:
         url = line.strip("\n")
+        encoded_url = encode(url)
+        # skip existing files
+        if os.path.isfile(path + "/" + encoded_url):
+            break
         handle = urllib2.urlopen(url)
         src = handle.read()
         #src = src.encode('utf-8')
         print "GOOD\t" + url
-        encoded_url = encode(url)
         f = open(path + "/" + encoded_url, "w")
         f.write(src)
         f.close()
@@ -130,7 +139,12 @@ def main():
   if sys.argv[2] == 'html':
     filename = sys.argv[1]
     path = sys.argv[3]
-    download_html_content_no_check_english(filename, path)
+    if os.path.isdir(filename):
+        # Process all files in dir
+        download_html_content_no_check_english_all(filename, path)
+    else:
+        # process all url's in file
+        download_html_content_no_check_english(filename, path)
   elif sys.argv[2] == 'url':
     in_filename = sys.argv[1]
     out_filename = sys.argv[3]

@@ -3,11 +3,17 @@ from vistrails.core.configuration import get_vistrails_configuration
 from vistrails.core.modules.vistrails_module import Module, ModuleError, \
     ModuleSuspended, NotCacheable
 
+import io
+import os
+import os.path
 import scp
 import time
-
 # Assume server is running on a system using posixpath
 import posixpath
+
+import tej
+from userpackages.tej.init import BaseSubmitJob, QueueCache, ServerLogger, \
+    RemoteJob
 
 class Crawler(Module):
     """ Crawler creates a dict with information about the crawler
@@ -31,6 +37,7 @@ class Crawler(Module):
         crawler['model_dir'] = posixpath.join(crawler['crawler_dir'], 'model')
         crawler['seeds_dir'] = posixpath.join(crawler['crawler_dir'], 'seeds')
         crawler['seeds_file'] = posixpath.join(crawler['seeds_dir'], 'seeds')
+        crawler['url_examples_dir'] = posixpath.join(crawler['crawler_dir'], 'url_examples')
         crawler['examples_dir'] = posixpath.join(crawler['crawler_dir'], 'examples')
         # using default server conf for now
         # Later we may want to copy it to crawler dir and modify it
@@ -53,18 +60,14 @@ class CreateCrawler(NotCacheable, Module):
         Warning: This will delete the existing crawler
     """
     _settings = ModuleSettings(namespace='control')
-    _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
-                    ('seed_file', '(basic:File)'),
-                    ('model_examples', '(basic:Directory)')]
+    _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
     _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
 
     def compute(self):
         crawler = self.get_input('crawler')
         queue = crawler['queue']
 
-        model_examples = self.get_input('model_examples').name
-
-        STEPS = 10
+        STEPS = 6
 
         cd = 'cd %s' % crawler['bin_path']
 
@@ -83,28 +86,6 @@ class CreateCrawler(NotCacheable, Module):
         # Clean data directory
         queue.check_call('%s %s' % (crawler['clean_data'], crawler['data_dir']))
         self.logging.update_progress(self, 5.0/STEPS)
-
-        # Insert seeds
-        queue.check_call('mkdir -p %s' % crawler['seeds_dir'])
-        self.logging.update_progress(self, 6.0/STEPS)
-        scp_client = scp.SCPClient(queue.get_client().get_transport())
-        scp_client.put(self.get_input('seed_file').name,
-                       crawler['seeds_file'])
-        self.logging.update_progress(self, 7.0/STEPS)
-        queue.check_call('%s; %s %s %s %s' % (cd,
-                                              crawler['insert_seeds'],
-                                              crawler['conf_dir'],
-                                              crawler['seeds_file'],
-                                              crawler['data_dir']))
-        self.logging.update_progress(self, 8.0/STEPS)
-
-        # Create model
-        scp_client.put(model_examples, crawler['examples_dir'], recursive=True)
-        self.logging.update_progress(self, 9.0/STEPS)
-        queue.check_call('%s; %s %s %s' % (cd,
-                                           crawler['build_model'],
-                                           crawler['examples_dir'],
-                                           crawler['model_dir']))
 
         self.logging.update_progress(self, 1.0)
         # done, ready to start
@@ -127,6 +108,8 @@ class AddSeed(NotCacheable, Module):
 
         cd = 'cd %s' % crawler['bin_path']
 
+        queue.check_call('mkdir -p %s' % crawler['seeds_dir'])
+
         # Insert seeds
         scp_client = scp.SCPClient(queue.get_client().get_transport())
         scp_client.put(self.get_input('seed_file').name,
@@ -140,8 +123,11 @@ class AddSeed(NotCacheable, Module):
         self.logging.update_progress(self, 1.0)
         self.set_output('crawler', crawler)
 
-class UpdateModel(NotCacheable, Module):
-    """ UpdateModel rebuilds the model from a directory of examples
+class CreateModelFromUrls(BaseSubmitJob):
+    """ rebuilds the model from a directory of examples
+
+        Directory should contain directories "positive" and "negative"
+        with files containing an url on each line
 
     """
     _settings = ModuleSettings(namespace='modify')
@@ -149,31 +135,282 @@ class UpdateModel(NotCacheable, Module):
                     ('model_examples', '(basic:Directory)')]
     _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
 
-    def compute(self):
+    def job_read_inputs(self):
+        """Reads the input ports.
+        """
         crawler = self.get_input('crawler')
-        queue = crawler['queue']
+        return {'destination': crawler['queue'].destination_string,
+                'queue': str(crawler['queue'].queue),
+                'job_id': self.make_id(),
+                'crawler': crawler,
+                'model_examples': self.get_input('model_examples').name}
 
-        model_examples = self.get_input('model_examples').name
+    def job_start(self, params):
+        """Sends the directory and submits the job.
+        """
+        queue = QueueCache.get(params['destination'], params['queue'])
 
-        STEPS = 3
+        # First, check if job already exists
+        try:
+            with ServerLogger.hide_output():
+                queue.status(params['job_id'])
+        except (tej.JobNotFound, tej.QueueDoesntExist):
+            pass
+        else:
+            return params
 
-        cd = 'cd %s' % crawler['bin_path']
+        # Alright, submit a new job
 
-        # Clear model directory
-        queue.check_call('rm -rf %s/*' % crawler['model_dir'])
-        self.logging.update_progress(self, 1.0/STEPS)
+        crawler = params['crawler']
+        model_examples = params['model_examples']
 
-        # Create model
-        scp_client = scp.SCPClient(queue.get_client().get_transport())
-        scp_client.put(model_examples, crawler['examples_dir'], recursive=True)
-        self.logging.update_progress(self, 2.0/STEPS)
-        queue.check_call('%s; %s %s %s' % (cd,
-                                           crawler['build_model'],
-                                           crawler['examples_dir'],
-                                           crawler['model_dir']))
+        # Create script
+        script = u''
+        script += 'rm -rf %s\n' % crawler['examples_dir']
+        script += 'rm -rf %s/*\n' % crawler['model_dir']
+        # Fetch html
+        scrap_dir = posixpath.join(crawler['bin_path'], '..', 'analytics',
+                                   'escort', 'download', 'scrap.py')
+        pos_dir = posixpath.join(crawler['examples_dir'], 'positive')
+        script += 'mkdir -p %s\n' % pos_dir
+        script += 'python %s %s html %s\n' % (scrap_dir, 'positive', pos_dir)
+        neg_dir = posixpath.join(crawler['examples_dir'], 'negative')
+        script += 'mkdir -p %s\n' % neg_dir
+        script += 'python %s %s html %s\n' % (scrap_dir, 'negative', neg_dir)
+        # Build model
+        script += 'cd %s\n' % crawler['bin_path']
+        script += '%s %s %s' % (crawler['build_model'],
+                                crawler['examples_dir'],
+                                crawler['model_dir'])
 
-        self.logging.update_progress(self, 1.0)
-        self.set_output('crawler', crawler)
+        kwargs = {'mode': 'w', 'newline': '\n'}
+        with io.open(os.path.join(model_examples, 'vistrails_source.sh'),
+                     **kwargs) as fp:
+            fp.write(script)
+        with io.open(os.path.join(model_examples, 'start.sh'), 'w',
+                     newline='\n') as fp:
+            fp.write(u'/bin/sh '
+                     u'vistrails_source.sh '
+                     u'>_stdout.txt '
+                     u'2>_stderr.txt\n')
+
+        queue.submit(params['job_id'], model_examples)
+
+        # clean dir so that directory hash is unchanged
+        os.remove(os.path.join(model_examples, 'vistrails_source.sh'))
+        os.remove(os.path.join(model_examples, 'start.sh'))
+
+        return params
+
+    def job_set_results(self, params):
+        """Sets the output ports once the job is finished.
+        """
+        queue = QueueCache.get(params['destination'], params['queue'])
+        if params['exitcode']:
+
+            temp_dir = self.interpreter.filePool.create_directory(
+                    prefix='vt_tmp_shelljobout_').name
+            queue.download(params['job_id'], ['_stderr.txt'],
+                           directory=temp_dir)
+            stderr = os.path.join(temp_dir, '_stderr.txt')
+            raise ModuleError(self, 'Failed with exit code "%s"\n%s' % (params['exitcode'], stderr))
+
+        self.set_output('crawler', params['crawler'])
+
+        self.set_output('exitcode', params['exitcode'])
+        self.set_output('job', RemoteJob(queue, params['job_id']))
+
+
+class UpdateModelFromUrls(BaseSubmitJob):
+    """ rebuilds the model from a directory of examples
+
+        Directory should contain directories "positive" and "negative"
+        with files containing an url on each line
+
+    """
+    _settings = ModuleSettings(namespace='modify')
+    _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
+                    ('model_examples', '(basic:Directory)')]
+    _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
+
+    def job_read_inputs(self):
+        """Reads the input ports.
+        """
+        crawler = self.get_input('crawler')
+        return {'destination': crawler['queue'].destination_string,
+                'queue': str(crawler['queue'].queue),
+                'job_id': self.make_id(),
+                'crawler': crawler,
+                'model_examples': self.get_input('model_examples').name}
+
+    def job_start(self, params):
+        """Sends the directory and submits the job.
+        """
+        queue = QueueCache.get(params['destination'], params['queue'])
+
+        # First, check if job already exists
+        try:
+            with ServerLogger.hide_output():
+                queue.status(params['job_id'])
+        except (tej.JobNotFound, tej.QueueDoesntExist):
+            pass
+        else:
+            return params
+
+        # Alright, submit a new job
+
+        crawler = params['crawler']
+        model_examples = params['model_examples']
+
+        # Create script
+        script = u''
+        #script += 'rm -rf %s\n' % crawler['examples_dir']
+        script += 'rm -rf %s/*\n' % crawler['model_dir']
+        # Fetch html
+        scrap_dir = posixpath.join(crawler['bin_path'], '..', 'analytics',
+                                   'escort', 'download', 'scrap.py')
+        pos_dir = posixpath.join(crawler['examples_dir'], 'positive')
+        script += 'mkdir -p %s\n' % pos_dir
+        script += 'python %s %s html %s\n' % (scrap_dir, 'positive', pos_dir)
+        neg_dir = posixpath.join(crawler['examples_dir'], 'negative')
+        script += 'mkdir -p %s\n' % neg_dir
+        script += 'python %s %s html %s\n' % (scrap_dir, 'negative', neg_dir)
+        # Build model
+        script += 'cd %s\n' % crawler['bin_path']
+        script += '%s %s %s' % (crawler['build_model'],
+                                crawler['examples_dir'],
+                                crawler['model_dir'])
+
+        kwargs = {'mode': 'w', 'newline': '\n'}
+        with io.open(os.path.join(model_examples, 'vistrails_source.sh'),
+                     **kwargs) as fp:
+            fp.write(script)
+        with io.open(os.path.join(model_examples, 'start.sh'), 'w',
+                     newline='\n') as fp:
+            fp.write(u'/bin/sh '
+                     u'vistrails_source.sh '
+                     u'>_stdout.txt '
+                     u'2>_stderr.txt\n')
+
+        queue.submit(params['job_id'], model_examples)
+
+        # clean dir so that directory hash is unchanged
+        os.remove(os.path.join(model_examples, 'vistrails_source.sh'))
+        os.remove(os.path.join(model_examples, 'start.sh'))
+
+        return params
+
+    def job_set_results(self, params):
+        """Sets the output ports once the job is finished.
+        """
+        queue = QueueCache.get(params['destination'], params['queue'])
+        if params['exitcode']:
+
+            temp_dir = self.interpreter.filePool.create_directory(
+                    prefix='vt_tmp_shelljobout_').name
+            queue.download(params['job_id'], ['_stderr.txt'],
+                           directory=temp_dir)
+            stderr = os.path.join(temp_dir, '_stderr.txt')
+            raise ModuleError(self, 'Failed with exit code "%s"\n%s' % (params['exitcode'], stderr))
+
+        self.set_output('crawler', params['crawler'])
+
+        self.set_output('exitcode', params['exitcode'])
+        self.set_output('job', RemoteJob(queue, params['job_id']))
+
+
+class CreateModelFromExamples(BaseSubmitJob):
+    """ rebuilds the model from a directory of examples
+
+        Directory should contain directories "positive" and "negative"
+        with files containing html pages
+
+    """
+    _settings = ModuleSettings(namespace='modify')
+    _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
+                    ('model_examples', '(basic:Directory)')]
+    _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
+
+    def job_read_inputs(self):
+        """Reads the input ports.
+        """
+        crawler = self.get_input('crawler')
+        return {'destination': crawler['queue'].destination_string,
+                'queue': str(crawler['queue'].queue),
+                'job_id': self.make_id(),
+                'crawler': crawler,
+                'model_examples': self.get_input('model_examples').name}
+
+    def job_start(self, params):
+        """Sends the directory and submits the job.
+        """
+        queue = QueueCache.get(params['destination'], params['queue'])
+
+        # First, check if job already exists
+        try:
+            with ServerLogger.hide_output():
+                queue.status(params['job_id'])
+        except (tej.JobNotFound, tej.QueueDoesntExist):
+            pass
+        else:
+            return params
+
+        # Alright, submit a new job
+
+        crawler = params['crawler']
+        model_examples = params['model_examples']
+        pos_dir = posixpath.join(crawler['examples_dir'], 'positive')
+        neg_dir = posixpath.join(crawler['examples_dir'], 'negative')
+
+        # Create script
+        script = u''
+        script += 'rm -rf %s\n' % crawler['examples_dir']
+        script += 'cp -r positive %s\n' % pos_dir
+        script += 'cp -r negative %s\n' % neg_dir
+        script += 'rm -rf %s/*\n' % crawler['model_dir']
+
+        # Build model
+        script += 'cd %s\n' % crawler['bin_path']
+        script += '%s %s %s' % (crawler['build_model'],
+                                crawler['examples_dir'],
+                                crawler['model_dir'])
+
+        kwargs = {'mode': 'w', 'newline': '\n'}
+        with io.open(os.path.join(model_examples, 'vistrails_source.sh'),
+                     **kwargs) as fp:
+            fp.write(script)
+        with io.open(os.path.join(model_examples, 'start.sh'), 'w',
+                     newline='\n') as fp:
+            fp.write(u'/bin/sh '
+                     u'vistrails_source.sh '
+                     u'>_stdout.txt '
+                     u'2>_stderr.txt\n')
+
+        queue.submit(params['job_id'], model_examples)
+
+        # clean dir so that directory hash is unchanged
+        os.remove(os.path.join(model_examples, 'vistrails_source.sh'))
+        os.remove(os.path.join(model_examples, 'start.sh'))
+
+        return params
+
+    def job_set_results(self, params):
+        """Sets the output ports once the job is finished.
+        """
+        queue = QueueCache.get(params['destination'], params['queue'])
+        if params['exitcode']:
+
+            temp_dir = self.interpreter.filePool.create_directory(
+                    prefix='vt_tmp_shelljobout_').name
+            queue.download(params['job_id'], ['_stderr.txt'],
+                           directory=temp_dir)
+            stderr = os.path.join(temp_dir, '_stderr.txt')
+            raise ModuleError(self, 'Failed with exit code "%s"\n%s' % (params['exitcode'], stderr))
+
+        self.set_output('crawler', params['crawler'])
+
+        self.set_output('exitcode', params['exitcode'])
+        self.set_output('job', RemoteJob(queue, params['job_id']))
 
 class StartCrawler(NotCacheable, Module):
     """ StartCrawler starts the crawler at ~/.crawler/CRAWLERNAME/
@@ -501,7 +738,7 @@ class RunLDA(NotCacheable, Module):
         self.set_output('crawler', crawler)
         queue = crawler['queue']
 
-        lda_dir = posixpath.join(crawler['bin_path'], '..', 'analysis', 'lda_pipeline')
+        lda_dir = posixpath.join(crawler['bin_path'], '..', 'analytics', 'lda_pipeline')
 
         cd = "cd %s" % lda_dir
 
@@ -515,7 +752,6 @@ class RunLDA(NotCacheable, Module):
 
         STEPS = 4
 
-        print queue.check_output("which python")
         queue.check_output("%s; sh compile_Extract.sh" % cd)
         self.logging.update_progress(self, 1.0/STEPS)
 
@@ -541,4 +777,5 @@ class RunLDA(NotCacheable, Module):
 _modules = [Crawler, CreateCrawler, StartCrawler, StopCrawler, CrawlerStatus,
             CrawledPages, FrontierPages, HarvestInfo, NonRelevantPages,
             OutLinks, RelevantPages, CrawlerLog, LinkStorageLog,
-            TargetStorageLog, RunLDA, AddSeed, UpdateModel]
+            TargetStorageLog, RunLDA, AddSeed, CreateModelFromUrls,
+            UpdateModelFromUrls, CreateModelFromExamples]
