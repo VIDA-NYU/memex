@@ -7,6 +7,7 @@ import io
 import os
 import os.path
 import scp
+import shutil
 import time
 # Assume server is running on a system using posixpath
 import posixpath
@@ -27,7 +28,8 @@ class Crawler(Module):
     _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
 
     def compute(self):
-        crawler = {'queue':self.get_input('queue'),
+        crawler = {'destination': self.get_input('queue').destination_string,
+                   'queue': str(self.get_input('queue').queue),
                    'name':self.get_input('name'),
                    'bin_path':self.get_input('bin_path').name
                    }
@@ -65,7 +67,7 @@ class CreateCrawler(NotCacheable, Module):
 
     def compute(self):
         crawler = self.get_input('crawler')
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
 
         STEPS = 6
 
@@ -102,7 +104,7 @@ class AddSeed(NotCacheable, Module):
 
     def compute(self):
         crawler = self.get_input('crawler')
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
 
         STEPS = 2
 
@@ -139,8 +141,8 @@ class CreateModelFromUrls(BaseSubmitJob):
         """Reads the input ports.
         """
         crawler = self.get_input('crawler')
-        return {'destination': crawler['queue'].destination_string,
-                'queue': str(crawler['queue'].queue),
+        return {'destination': crawler['destination'],
+                'queue': crawler['queue'],
                 'job_id': self.make_id(),
                 'crawler': crawler,
                 'model_examples': self.get_input('model_examples').name}
@@ -164,6 +166,12 @@ class CreateModelFromUrls(BaseSubmitJob):
         crawler = params['crawler']
         model_examples = params['model_examples']
 
+        # copy model_examples to temp dir
+        temp_dir = self.interpreter.filePool.create_directory(
+                               prefix='vt_tmp_jobdir_').name
+        shutil.copytree(os.path.join(model_examples, 'positive'), os.path.join(temp_dir, 'positive'))
+        shutil.copytree(os.path.join(model_examples, 'negative'), os.path.join(temp_dir, 'negative'))
+
         # Create script
         script = u''
         script += 'rm -rf %s\n' % crawler['examples_dir']
@@ -184,21 +192,17 @@ class CreateModelFromUrls(BaseSubmitJob):
                                 crawler['model_dir'])
 
         kwargs = {'mode': 'w', 'newline': '\n'}
-        with io.open(os.path.join(model_examples, 'vistrails_source.sh'),
+        with io.open(os.path.join(temp_dir, 'vistrails_source.sh'),
                      **kwargs) as fp:
             fp.write(script)
-        with io.open(os.path.join(model_examples, 'start.sh'), 'w',
+        with io.open(os.path.join(temp_dir, 'start.sh'), 'w',
                      newline='\n') as fp:
             fp.write(u'/bin/sh '
                      u'vistrails_source.sh '
                      u'>_stdout.txt '
                      u'2>_stderr.txt\n')
 
-        queue.submit(params['job_id'], model_examples)
-
-        # clean dir so that directory hash is unchanged
-        os.remove(os.path.join(model_examples, 'vistrails_source.sh'))
-        os.remove(os.path.join(model_examples, 'start.sh'))
+        queue.submit(params['job_id'], temp_dir)
 
         return params
 
@@ -237,8 +241,8 @@ class UpdateModelFromUrls(BaseSubmitJob):
         """Reads the input ports.
         """
         crawler = self.get_input('crawler')
-        return {'destination': crawler['queue'].destination_string,
-                'queue': str(crawler['queue'].queue),
+        return {'destination': crawler['destination'],
+                'queue': crawler['queue'],
                 'job_id': self.make_id(),
                 'crawler': crawler,
                 'model_examples': self.get_input('model_examples').name}
@@ -262,6 +266,12 @@ class UpdateModelFromUrls(BaseSubmitJob):
         crawler = params['crawler']
         model_examples = params['model_examples']
 
+        # copy model_examples to temp dir
+        temp_dir = self.interpreter.filePool.create_directory(
+                               prefix='vt_tmp_jobdir_').name
+        shutil.copytree(os.path.join(model_examples, 'positive'), os.path.join(temp_dir, 'positive'))
+        shutil.copytree(os.path.join(model_examples, 'negative'), os.path.join(temp_dir, 'negative'))
+
         # Create script
         script = u''
         #script += 'rm -rf %s\n' % crawler['examples_dir']
@@ -282,21 +292,17 @@ class UpdateModelFromUrls(BaseSubmitJob):
                                 crawler['model_dir'])
 
         kwargs = {'mode': 'w', 'newline': '\n'}
-        with io.open(os.path.join(model_examples, 'vistrails_source.sh'),
+        with io.open(os.path.join(temp_dir, 'vistrails_source.sh'),
                      **kwargs) as fp:
             fp.write(script)
-        with io.open(os.path.join(model_examples, 'start.sh'), 'w',
+        with io.open(os.path.join(temp_dir, 'start.sh'), 'w',
                      newline='\n') as fp:
             fp.write(u'/bin/sh '
                      u'vistrails_source.sh '
                      u'>_stdout.txt '
                      u'2>_stderr.txt\n')
 
-        queue.submit(params['job_id'], model_examples)
-
-        # clean dir so that directory hash is unchanged
-        os.remove(os.path.join(model_examples, 'vistrails_source.sh'))
-        os.remove(os.path.join(model_examples, 'start.sh'))
+        queue.submit(params['job_id'], temp_dir)
 
         return params
 
@@ -335,8 +341,8 @@ class CreateModelFromExamples(BaseSubmitJob):
         """Reads the input ports.
         """
         crawler = self.get_input('crawler')
-        return {'destination': crawler['queue'].destination_string,
-                'queue': str(crawler['queue'].queue),
+        return {'destination': crawler['destination'],
+                'queue': crawler['queue'],
                 'job_id': self.make_id(),
                 'crawler': crawler,
                 'model_examples': self.get_input('model_examples').name}
@@ -362,6 +368,12 @@ class CreateModelFromExamples(BaseSubmitJob):
         pos_dir = posixpath.join(crawler['examples_dir'], 'positive')
         neg_dir = posixpath.join(crawler['examples_dir'], 'negative')
 
+        # copy model_examples to temp dir
+        temp_dir = self.interpreter.filePool.create_directory(
+                               prefix='vt_tmp_jobdir_').name
+        shutil.copytree(os.path.join(model_examples, 'positive'), os.path.join(temp_dir, 'positive'))
+        shutil.copytree(os.path.join(model_examples, 'negative'), os.path.join(temp_dir, 'negative'))
+
         # Create script
         script = u''
         script += 'rm -rf %s\n' % crawler['examples_dir']
@@ -376,21 +388,17 @@ class CreateModelFromExamples(BaseSubmitJob):
                                 crawler['model_dir'])
 
         kwargs = {'mode': 'w', 'newline': '\n'}
-        with io.open(os.path.join(model_examples, 'vistrails_source.sh'),
+        with io.open(os.path.join(temp_dir, 'vistrails_source.sh'),
                      **kwargs) as fp:
             fp.write(script)
-        with io.open(os.path.join(model_examples, 'start.sh'), 'w',
+        with io.open(os.path.join(temp_dir, 'start.sh'), 'w',
                      newline='\n') as fp:
             fp.write(u'/bin/sh '
                      u'vistrails_source.sh '
                      u'>_stdout.txt '
                      u'2>_stderr.txt\n')
 
-        queue.submit(params['job_id'], model_examples)
-
-        # clean dir so that directory hash is unchanged
-        os.remove(os.path.join(model_examples, 'vistrails_source.sh'))
-        os.remove(os.path.join(model_examples, 'start.sh'))
+        queue.submit(params['job_id'], temp_dir)
 
         return params
 
@@ -424,7 +432,7 @@ class StartCrawler(NotCacheable, Module):
 
     def compute(self):
         crawler = self.get_input('crawler')
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
 
         cd = 'cd %s' % crawler['bin_path']
 
@@ -485,7 +493,7 @@ class StopCrawler(NotCacheable, Module):
 
     def compute(self):
         crawler = self.get_input('crawler')
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
 
         # Stop crawler
         # We remove the process itself with 'sh -c'
@@ -515,7 +523,7 @@ class CrawlerStatus(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         _, output = queue._call("ps aux | awk 'NR == 1 || (/%s/ && !/ps aux/) {print}'" %
                                 crawler['long_name'], True)
         self.logging.annotate(self, {'status': output})
@@ -536,7 +544,7 @@ class CrawledPages(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         lines = self.get_input('lines')
         fname = posixpath.join(crawler['data_dir'], 'data_monitor',
                                'crawledpages.csv')
@@ -559,7 +567,7 @@ class FrontierPages(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         lines = self.get_input('lines')
         fname = posixpath.join(crawler['data_dir'], 'data_monitor',
                                'frontierpages.csv')
@@ -582,7 +590,7 @@ class HarvestInfo(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         lines = self.get_input('lines')
         fname = posixpath.join(crawler['data_dir'], 'data_monitor',
                                'harvestinfo.csv')
@@ -605,7 +613,7 @@ class NonRelevantPages(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         lines = self.get_input('lines')
         fname = posixpath.join(crawler['data_dir'], 'data_monitor',
                             'nonrelevantpages.csv')
@@ -628,7 +636,7 @@ class OutLinks(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         lines = self.get_input('lines')
         fname = posixpath.join(crawler['data_dir'], 'data_monitor',
                                'outlinks.csv')
@@ -651,7 +659,7 @@ class RelevantPages(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         lines = self.get_input('lines')
         fname = posixpath.join(crawler['data_dir'], 'data_monitor',
                                'relevantpages.csv')
@@ -674,7 +682,7 @@ class CrawlerLog(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         lines = self.get_input('lines')
         fname = posixpath.join(crawler['bin_path'], 'log', 'crawler.log')
         _, output = queue._call("tail -n %s %s" % (lines, fname), True)
@@ -696,7 +704,7 @@ class LinkStorageLog(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         lines = self.get_input('lines')
         fname = posixpath.join(crawler['bin_path'], 'log', 'link_storage.log')
         _, output = queue._call("tail -n %s %s" % (lines, fname), True)
@@ -718,7 +726,7 @@ class TargetStorageLog(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
         lines = self.get_input('lines')
         fname = posixpath.join(crawler['bin_path'], 'log', 'target_storage.log')
         _, output = queue._call("tail -n %s %s" % (lines, fname), True)
@@ -736,7 +744,7 @@ class RunLDA(NotCacheable, Module):
     def compute(self):
         crawler = self.get_input('crawler')
         self.set_output('crawler', crawler)
-        queue = crawler['queue']
+        queue = QueueCache.get(crawler['destination'], crawler['queue'])
 
         lda_dir = posixpath.join(crawler['bin_path'], '..', 'analytics', 'lda_pipeline')
 
