@@ -41,7 +41,7 @@ val params = LDAModelParams(numTopics = 20, dataset = dataset,
 
 // Name of the output model folder to generate
 // val modelPath = file("lda-"+dataset.signature+"-"+params.signature);
-val modelPath = file("lda-result");
+val modelPath = file(args(1));
 
 // Trains the model: the model (and intermediate models) are written to the
 // output folder.  If a partially trained model with the same dataset and

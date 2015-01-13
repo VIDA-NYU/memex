@@ -371,12 +371,15 @@ class CreateModelFromExamples(BaseSubmitJob):
         # copy model_examples to temp dir
         temp_dir = self.interpreter.filePool.create_directory(
                                prefix='vt_tmp_jobdir_').name
-        shutil.copytree(os.path.join(model_examples, 'positive'), os.path.join(temp_dir, 'positive'))
-        shutil.copytree(os.path.join(model_examples, 'negative'), os.path.join(temp_dir, 'negative'))
+        shutil.copytree(os.path.join(model_examples, 'positive'),
+                        os.path.join(temp_dir, 'positive'))
+        shutil.copytree(os.path.join(model_examples, 'negative'),
+                        os.path.join(temp_dir, 'negative'))
 
         # Create script
         script = u''
         script += 'rm -rf %s\n' % crawler['examples_dir']
+        script += 'mkdir %s\n' % crawler['examples_dir']
         script += 'cp -r positive %s\n' % pos_dir
         script += 'cp -r negative %s\n' % neg_dir
         script += 'rm -rf %s/*\n' % crawler['model_dir']
@@ -733,54 +736,109 @@ class TargetStorageLog(NotCacheable, Module):
         self.logging.annotate(self, {'result': output})
         self.set_output('result', output)
 
-class RunLDA(NotCacheable, Module):
+class RunLDA(BaseSubmitJob):
     """ RunLDA computes LDA and returns summary
+
+        Name is needed to create a new LDA when one already exist
     """
     _settings = ModuleSettings(namespace='analysis')
-    _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
+    _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
+                    ('name', '(basic:String)')]
     _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
                      ('summary', '(basic:String)')]
 
-    def compute(self):
+    def job_read_inputs(self):
+        """Reads the input ports.
+        """
         crawler = self.get_input('crawler')
-        self.set_output('crawler', crawler)
-        queue = QueueCache.get(crawler['destination'], crawler['queue'])
+        return {'destination': crawler['destination'],
+                'queue': crawler['queue'],
+                'job_id': self.make_id(),
+                'crawler': crawler,
+                'lda_name': self.get_input('name')}
 
-        lda_dir = posixpath.join(crawler['bin_path'], '..', 'analytics', 'lda_pipeline')
+    def job_start(self, params):
+        """Sends the directory and submits the job.
+        """
+        crawler = params['crawler']
 
-        cd = "cd %s" % lda_dir
+        queue = QueueCache.get(params['destination'], params['queue'])
+        # First, check if job already exists
+        try:
+            with ServerLogger.hide_output():
+                queue.status(params['job_id'])
+        except (tej.JobNotFound, tej.QueueDoesntExist):
+            pass
+        else:
+            return params
 
-        # remove old lda_input.csv*
-        queue.check_output("%s; rm -rf %s*" % (cd,
-                           posixpath.join(crawler['data_dir'], 'lda_input.csv')))
+        # Alright, submit a new job
 
-        # remove old result
-        queue.check_output("%s; rm -rf %s" % (cd,
-                            posixpath.join('lda-result')))
+        lda_dir = posixpath.join(crawler['bin_path'], '..', 'analytics',
+                                 'lda_pipeline')
 
-        STEPS = 4
+        # Create script
+        script = u''
+        script += "pwd=`pwd`\n"
+        script += "cd %s\n" % lda_dir
+        script += "rm -rf %s*\n" % posixpath.join(crawler['data_dir'],
+                                                'lda_input.csv')
+        # remove any existing result
+        script += "rm -rf %s\n" % params['lda_name']
+        script += "/bin/sh compile_Extract.sh\n"
+        script += ("java -cp .:lib/boilerpipe-1.2.0.jar:"
+                   "lib/nekohtml-1.9.13.jar:"
+                   "lib/xerces-2.9.1.jar Extract %s %s | "
+                   "python concat_nltk.py %s\n") % \
+                        (posixpath.join(crawler['data_dir'], 'data_target'),
+                         posixpath.join(crawler['data_dir'], 'data_monitor',
+                                        'relevantpages.csv'),
+                         posixpath.join(crawler['data_dir'], 'lda_input.csv'))
+        script += "java -jar lib/tmt-0.4.0.jar ht.scala %s %s\n" % \
+                                       (posixpath.join(crawler['data_dir'],
+                                                       'lda_input.csv'),
+                                        params['lda_name'])
+        script += "cp %s $pwd/summary.txt\n" % \
+                   posixpath.join(params['lda_name'], '00500', 'summary.txt')
+        kwargs = {'mode': 'w', 'newline': '\n'}
+        # copy scripts to temp dir
+        temp_dir = self.interpreter.filePool.create_directory(
+                               prefix='vt_tmp_jobdir_').name
+        with io.open(os.path.join(temp_dir, 'vistrails_source.sh'),
+                     **kwargs) as fp:
+            fp.write(script)
+        with io.open(os.path.join(temp_dir, 'start.sh'), 'w',
+                     newline='\n') as fp:
+            fp.write(u'/bin/sh '
+                     u'vistrails_source.sh '
+                     u'>_stdout.txt '
+                     u'2>_stderr.txt\n')
+        queue.submit(params['job_id'], temp_dir)
+        return params
 
-        queue.check_output("%s; sh compile_Extract.sh" % cd)
-        self.logging.update_progress(self, 1.0/STEPS)
+    def job_set_results(self, params):
+        """Sets the output ports once the job is finished.
+        """
+        queue = QueueCache.get(params['destination'], params['queue'])
+        if params['exitcode']:
+            temp_dir = self.interpreter.filePool.create_directory(
+                    prefix='vt_tmp_shelljobout_').name
+            queue.download(params['job_id'], ['_stderr.txt'],
+                           directory=temp_dir)
+            stderr = os.path.join(temp_dir, '_stderr.txt')
+            raise ModuleError(self, 'Failed with exit code "%s"\n%s' % (params['exitcode'], stderr))
+        temp_dir = self.interpreter.filePool.create_directory(
+                prefix='vt_tmp_shelljobres_').name
+        queue.download(params['job_id'], ['summary.txt'],
+                           directory=temp_dir)
+        with open(os.path.join(temp_dir, 'summary.txt')) as f:
+            summary = f.read()
+            self.set_output('summary', summary)
+            self.logging.annotate(self, {'summary': summary})
+        self.set_output('crawler', params['crawler'])
+        self.set_output('exitcode', params['exitcode'])
+        self.set_output('job', RemoteJob(queue, params['job_id']))
 
-
-        output = queue.check_output("%s; java -cp .:lib/boilerpipe-1.2.0.jar:lib/nekohtml-1.9.13.jar:lib/xerces-2.9.1.jar Extract %s %s | python concat_nltk.py %s" %
-                                (cd,
-                                 posixpath.join(crawler['data_dir'], 'data_target'),
-                                 posixpath.join(crawler['data_dir'], 'data_monitor', 'relevantpages.csv'),
-                                 posixpath.join(crawler['data_dir'], 'lda_input.csv')))
-        self.logging.update_progress(self, 2.0/STEPS)
-
-        output = queue.check_output("%s; java -jar lib/tmt-0.4.0.jar ht.scala %s" %
-                                       (cd, posixpath.join(crawler['data_dir'], 'lda_input.csv')))
-        self.logging.update_progress(self, 3.0/STEPS)
-
-        output = queue.check_output("%s; cat %s" %
-                                       (cd, posixpath.join('lda-result', '00500', 'summary.txt')))
-        self.logging.update_progress(self, 1.0)
-
-        self.logging.annotate(self, {'summary': output})
-        self.set_output('summary', output)
 
 _modules = [Crawler, CreateCrawler, StartCrawler, StopCrawler, CrawlerStatus,
             CrawledPages, FrontierPages, HarvestInfo, NonRelevantPages,
