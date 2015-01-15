@@ -117,25 +117,41 @@ def interesting_words(lsa):
     return res_df
 
 
-def bokeh_lsa(df):
+def to_str(wordlist):
+    for a in wordlist:
+        try:
+            yield str(a)
+        except UnicodeEncodeError:
+            pass
+
+
+def bokeh_lsa(year, df):
+    plt.output_file('output/lsa/'+str(year)+'.html')
+
     topics = [str(a) for a in df.columns]
-    words = [str(a) for a in df.index]
+    words = list(to_str(df.index))
     p = plt.figure(x_range=topics, y_range=words,
-           plot_width=1000, plot_height=1700,
-           title="Termite Plot", tools='resize, save')
+           plot_width=800, plot_height=600,
+           title=year, tools='resize, save')
 
     plot_sizes = []
-    plot_topic = []
-    plot_word = []
+    plot_topics = []
+    plot_words = []
+    print df
     for word, coeff in df.iterrows():
         for n, c in enumerate(coeff):
-            if c < 0:
-                plot_sizes.append(1000* coeff)
-                plot_topic.append(n)
-                plot_word.append(word)
+            if c > 0:
+                plot_sizes.append(c)
+                plot_topics.append(str(n))
+                plot_words.append(word)
+    if len(plot_sizes) == 0:
+        return
+    max_size = np.max(plot_sizes)
+    plot_sizes = [int(a/max_size * 75) + 25 for a in plot_sizes]
 
-    plt.output_file("foo.html")
-    p.circle(x=plot_topic, y=plot_word, size=plot_sizes, fill_alpha=0.6)
+    print plot_sizes, plot_words, plot_topics
+
+    p.circle(x=plot_topics, y=plot_words, size=plot_sizes, fill_alpha=0.6)
     plt.show(p)
 
     return plt.curplot()
@@ -148,11 +164,19 @@ def main_wordclouds():
 
 
 def main_example():
-    df = read_sample(100)
-    lsas = get_lsa_by_year(df)
-    lsa_df = interesting_words(lsas[lsas.index[0]])
-    bokeh_lsa(lsa_df)
+    #df = read_sample(100)
+    df = read_file()
+    gb = df[['year', 'abstract']].groupby('year')
+    for year, group_df in gb:
+        print "Processing:", year, "group_df.shape", group_df.shape
+        m = pv.Model([pv.Document(a) for a in group_df['abstract']], weight=pv.TFIDF)
+        lsa = m.reduce(2)
+    # lsas = get_lsa_by_year(df)
+        lsa_df = interesting_words(lsa)
+        p = bokeh_lsa(year, lsa_df)
+        return
 
 
 if __name__ == "__main__":
-    main_example()
+    #main_example()
+    pass
