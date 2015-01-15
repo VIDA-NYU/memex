@@ -134,7 +134,7 @@ class CreateModelFromUrls(BaseSubmitJob):
     """
     _settings = ModuleSettings(namespace='modify')
     _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
-                    ('model_examples', '(basic:Directory)')]
+                    ('model_examples', '(basic:Path)')]
     _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
 
     def job_read_inputs(self):
@@ -223,6 +223,9 @@ class CreateModelFromUrls(BaseSubmitJob):
 
         self.set_output('exitcode', params['exitcode'])
         self.set_output('job', RemoteJob(queue, params['job_id']))
+        # Delete the directory so that job can be run again
+        # user needs to delete the job manually in vistrails
+        queue.delete(params['job_id'])
 
 
 class UpdateModelFromUrls(BaseSubmitJob):
@@ -234,7 +237,7 @@ class UpdateModelFromUrls(BaseSubmitJob):
     """
     _settings = ModuleSettings(namespace='modify')
     _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
-                    ('model_examples', '(basic:Directory)')]
+                    ('model_examples', '(basic:Path)')]
     _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
 
     def job_read_inputs(self):
@@ -323,6 +326,9 @@ class UpdateModelFromUrls(BaseSubmitJob):
 
         self.set_output('exitcode', params['exitcode'])
         self.set_output('job', RemoteJob(queue, params['job_id']))
+        # Delete the directory so that job can be run again
+        # user needs to delete the job manually in vistrails
+        queue.delete(params['job_id'])
 
 
 class CreateModelFromExamples(BaseSubmitJob):
@@ -334,7 +340,7 @@ class CreateModelFromExamples(BaseSubmitJob):
     """
     _settings = ModuleSettings(namespace='modify')
     _input_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)'),
-                    ('model_examples', '(basic:Directory)')]
+                    ('model_examples', '(basic:Path)')]
     _output_ports = [('crawler', '(edu.nyu.vistrails.memexcrawler:Crawler)')]
 
     def job_read_inputs(self):
@@ -422,6 +428,9 @@ class CreateModelFromExamples(BaseSubmitJob):
 
         self.set_output('exitcode', params['exitcode'])
         self.set_output('job', RemoteJob(queue, params['job_id']))
+        # Delete the directory so that job can be run again
+        # user needs to delete the job manually in vistrails
+        queue.delete(params['job_id'])
 
 class StartCrawler(NotCacheable, Module):
     """ StartCrawler starts the crawler at ~/.crawler/CRAWLERNAME/
