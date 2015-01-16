@@ -185,6 +185,31 @@ def main_example():
     return
 
 
+def read_court_files(folder_path):
+    import glob
+    files = glob.glob(folder_path + "/*")
+    texts = []
+    for name in files: # 'file' is a builtin type, 'name' is a less-ambiguous variable name.
+        try:
+            with open(name) as f: # No need to specify 'r': this is the default.
+                texts.append(f.read())
+        except IOError as exc:
+            pass
+    return texts
+
+
+def get_lsa_terms(texts)
+    docs = [pv.Document(a) for a in texts]
+    model = pv.Model(docs, weight=pv.TFIDF)
+    lsa = model.reduce(2)
+    return lsa.terms
+
+
+def main_court():
+    texts = read_court_files("court")
+    lsa_terms = " ".join(get_lsa_terms(texts))
+    generate_word_cloud_image(lsa_terms, "output/court_doc")
+
 if __name__ == "__main__":
     #main_example()
     pass
