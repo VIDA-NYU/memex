@@ -157,6 +157,15 @@ def bokeh_lsa(year, df):
     return plt.curplot()
 
 
+def create_Kane_csv(df):
+    """
+    CSV Columns:
+    title, abstract, url, year, author
+    """
+    
+    df.to_csv("msr_data.csv", columns=["title", "abstract", "url", "year", "authors"], encoding="utf-8")
+
+
 def main_wordclouds():
     df = read_file()
     generate_annual_wordcloud_images(df, "abstract")
@@ -166,15 +175,14 @@ def main_wordclouds():
 def main_example():
     #df = read_sample(100)
     df = read_file()
-    gb = df[['year', 'abstract']].groupby('year')
-    for year, group_df in gb:
-        print "Processing:", year, "group_df.shape", group_df.shape
-        m = pv.Model([pv.Document(a) for a in group_df['abstract']], weight=pv.TFIDF)
-        lsa = m.reduce(2)
-    # lsas = get_lsa_by_year(df)
-        lsa_df = interesting_words(lsa)
-        p = bokeh_lsa(year, lsa_df)
-        return
+    lsas = get_lsa_by_year(df)
+    lsa_df = pd.DataFrame.from_dict({'year' : lsas.index,
+                                     'lsa_terms' : [" ".join(a.terms) for a in lsas]})
+    print lsa_df
+    generate_annual_wordcloud_images(lsa_df, 'lsa_terms')
+    #lsa_df = interesting_words(lsa)
+    #p = bokeh_lsa(year, lsa_df)
+    return
 
 
 if __name__ == "__main__":
