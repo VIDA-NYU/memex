@@ -102,7 +102,7 @@ def wordclouds_to_bokeh(wordclouds):
     plt.show(p)
 
 
-def interesting_words(lsa):
+def interesting_words(lsa, n=3):
     lsa_df = pd.DataFrame.from_dict(lsa.concepts)
     res = []
     for row, series in lsa_df.iterrows():
@@ -111,10 +111,18 @@ def interesting_words(lsa):
         if series[0] <= 1e-8:
             print "in pass"
             continue
-        res.append(series.head(3))
     res_df = pd.DataFrame(res).transpose()
     res_df.fillna(0, inplace=True)
     return res_df
+
+
+def interesting_words_1(lsa, n=3):
+    lsa_df = pd.DataFrame.from_dict(lsa.concepts)
+    res = []
+    for row, series in lsa_df.iterrows():
+        s = sorted([(abs(y), x) for x, y in series.iterkv()], reverse=True)
+        res.extend([x for y,x in s[:n]])
+    return set(res)
 
 
 def to_str(wordlist):
@@ -198,17 +206,31 @@ def read_court_files(folder_path):
     return texts
 
 
-def get_lsa_terms(texts)
+def get_lsa(texts):
     docs = [pv.Document(a) for a in texts]
     model = pv.Model(docs, weight=pv.TFIDF)
     lsa = model.reduce(2)
-    return lsa.terms
+    return lsa
 
 
-def main_court():
+def flatten_list(l):
+    return [item for sublist in l for item in sublist]
+
+
+def main_court_lsa_words():
     texts = read_court_files("court")
-    lsa_terms = " ".join(get_lsa_terms(texts))
+    lsa_terms = " ".join(get_lsa(texts).terms)
     generate_word_cloud_image(lsa_terms, "output/court_doc")
+
+
+def main_court_minus_lsa_words():
+    texts = read_court_files("court")
+    words = interesting_words_1(get_lsa(texts), 100)
+    lsa_terms = set(words)
+    processed_texts = [w for w in flatten_list([t.split() for t in texts]) if w in lsa_terms]
+    doc = " ".join(processed_texts)
+    generate_word_cloud_image(doc, "output/court_doc.jpg")
+
 
 if __name__ == "__main__":
     #main_example()
