@@ -12,7 +12,7 @@ import edu.stanford.nlp.tmt.stage._;
 import edu.stanford.nlp.tmt.model.lda._;
 import edu.stanford.nlp.tmt.model.llda._;
 
-var source = CSVFile("data/lda_input.csv") ~> IDColumn(1);
+var source = CSVFile(args(0)) ~> IDColumn(1);
 val tokenizer = {
   SimpleEnglishTokenizer() ~>            // tokenize on space and punctuation
   CaseFolder() ~>                        // lowercase everything
@@ -40,7 +40,8 @@ val params = LDAModelParams(numTopics = 20, dataset = dataset,
   topicSmoothing = 0.01, termSmoothing = 0.01);
 
 // Name of the output model folder to generate
-val modelPath = file("lda-"+dataset.signature+"-"+params.signature);
+// val modelPath = file("lda-"+dataset.signature+"-"+params.signature);
+val modelPath = file(args(1));
 
 // Trains the model: the model (and intermediate models) are written to the
 // output folder.  If a partially trained model with the same dataset and
