@@ -1,0 +1,2 @@
+CVB0LDA v0 [Stanford Topic Modeling Toolbox]
+CSVFile("mrs.csv") ~> Column(6) ~> TokenizeWith(SimpleEnglishTokenizer.V1() ~> CaseFolder() ~> WordsAndNumbersOnlyFilter() ~> PorterStemmer() ~> MinimumLengthFilter(2) ~> StopWordFilter("en")) ~> TermCounter() ~> TermMinimumDocumentCountFilter(4) ~> TermDynamicStopListFilter(0) ~> DocumentMinimumLengthFilter(5)
