@@ -123,7 +123,7 @@ def compute_simpson_index(filename, voca):
             X = N*N
             sum = 0
             for token in counter:
-                print counter[token]
+                #print counter[token]
                 #sum += (counter[token] * (counter[token] - 1))/float(X)
                 sum += (counter[token] * (counter[token] ))/float(X)
             year2index.append([int(year), sum])
@@ -157,13 +157,14 @@ def plot(year2index, filename):
     plt.savefig(filename)
 
 def main(argv):
+    filename = "mrs.csv"
     voca_all = get_vocabulary_all(filename)
     #voca = get_vocabulary_filter(filename)
     voca_lda = get_vocabulary_lda("lda-bd92346b-100-c1fbb8bd/05000/term-index.txt")
     voca_dict = get_vocabulary_dict("materialsdictionary_v1.csv")
-    year2index_all = compute_simpson_index("mrs.csv", voca)
-    year2index_lda = compute_simpson_index("mrs.csv", voca)
-    year2index_dict = compute_simpson_index("mrs.csv", voca)
+    year2index_all = compute_simpson_index(filename, voca_all)
+    year2index_lda = compute_simpson_index(filename, voca_lda)
+    year2index_dict = compute_simpson_index(filename, voca_dict)
     plot(year2index_all, "figure_all.pdf")
     plot(year2index_lda, "figure_lda.pdf")
     plot(year2index_dict, "figure_dictionary.pdf")
