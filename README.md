@@ -1,3 +1,3 @@
-memexcrawler
+Focused Crawler Ecosystem
 ============
-Collaboration between NYU and Continuum Analytics in Memex Project funded by DARPA.
+Collaboration between NYU VIDA Team and Continuum Analytics in DARPA MEMEX Program.
