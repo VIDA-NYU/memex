@@ -113,7 +113,7 @@ def download_issues_cookie(id, cookies):
 
 def log_in():
     url = "http://journals.cambridge.org/action/login?firstPage=false"
-    payload = {'userName' : '198554', 'passWord' : 'Main'}
+    payload = {'userName' : 'myusername', 'passWord' : 'mypassword'}
     s = requests.session()
     r = s.post(url, payload)
     cookies = r.cookies
