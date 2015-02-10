@@ -41,14 +41,13 @@ public class Extract {
         writer.print(ArticleExtractor.INSTANCE.getText(content));;
         writer.close();
 */
-        if (m.containsKey(url))
-        {
-          String content = readFile(f.getPath());
-          content = ArticleExtractor.INSTANCE.getText(content);
-          content = content.trim().replaceAll(" +", " ");
-          content = content.replaceAll("[\n\"\t]", " ");
-          System.out.println(url + "\t" + m.get(url) + "\t" + content);
-        }
+        
+        String content = readFile(f.getPath());
+        content = ArticleExtractor.INSTANCE.getText(content);
+        content = content.trim().replaceAll(" +", " ");
+        content = content.replaceAll("[\n\"\t]", " ");
+        System.out.println(url + "\t"  + content);
+        
     }
     catch(Exception e){
       System.out.println("process Exception");
@@ -95,13 +94,10 @@ public class Extract {
   public static void main(String[] args) {
     try{
           String inputpath = args[0];
-//          path = args[1];
-          String timestampfile = args[1];
-
-    
+//          String timestampfile = args[1];
           File folder = new File(inputpath);
           Extract e = new Extract();
-          e.getTimestamp(timestampfile);
+//          e.getTimestamp(timestampfile);
           e.listFiles(folder);
     } catch(Exception e){
       System.out.println("Exception");

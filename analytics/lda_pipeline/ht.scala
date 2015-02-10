@@ -12,7 +12,7 @@ import edu.stanford.nlp.tmt.stage._;
 import edu.stanford.nlp.tmt.model.lda._;
 import edu.stanford.nlp.tmt.model.llda._;
 
-var source = CSVFile("data/lda_input.csv") ~> IDColumn(1);
+var source = CSVFile("data/lda_input.csv");
 val tokenizer = {
   SimpleEnglishTokenizer() ~>            // tokenize on space and punctuation
   CaseFolder() ~>                        // lowercase everything

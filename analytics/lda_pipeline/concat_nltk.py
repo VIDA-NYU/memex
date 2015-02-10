@@ -59,11 +59,11 @@ for content in sys.stdin:
   #content = open(file).read().replace("\"", "")
   #content = content.replace("\n", " ") 
   content = content.strip("\n")
-  url, timestamp, text = content.split("\t")
+  url, text = content.split("\t")
 #  if is_english(text):
   text = valid_words(text)
   #en_count += 1
   if len(text) > 100:
     len_count += 1
-    output.write(url + "\t" + timestamp + ",\"" + text + "\"\n")
+    output.write("\"" + url + "\",\"" + text + "\"\n")
 output.close()
