@@ -1,5 +1,4 @@
 import sys
-sys.path.append('/Users/krishnam/BayesianSets')
 
 import tfidf
 import BayesianSets
