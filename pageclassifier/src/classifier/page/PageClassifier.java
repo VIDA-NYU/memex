@@ -101,18 +101,23 @@ public class PageClassifier {
 		return values;
 	}	
 
-	public static PageClassifier loadClassifier(String cfg) throws IOException, ClassNotFoundException{
-		ParameterFile config = new ParameterFile(cfg);
-		StopList stoplist = new StopListArquivo(config.getParam("STOPLIST_FILES"));
-		InputStream is = new FileInputStream(config.getParam("FILE_CLASSIFIER"));
+	public static PageClassifier loadClassifier(String cfgDir) throws IOException, ClassNotFoundException{
+		String stoplistFile = cfgDir + "/stoplist.txt";
+		String modelFile = cfgDir + "/pageclassifier.model";
+        String featureFile = cfgDir + "/pageclassifier.features";
+
+		StopList stoplist = new StopListArquivo(stoplistFile);
+		InputStream is = new FileInputStream(modelFile);
 		ObjectInputStream objectInputStream = new ObjectInputStream(is);
 		Classifier classifier = (Classifier) objectInputStream.readObject();
-		String[] attributes = config.getParam("ATTRIBUTES", " ");
+
+		ParameterFile featureConfig = new ParameterFile(featureFile);
+		String[] attributes = featureConfig.getParam("ATTRIBUTES", " ");
 		weka.core.FastVector vectorAtt = new weka.core.FastVector();
 		for (int i = 0; i < attributes.length; i++) {
 			vectorAtt.addElement(new weka.core.Attribute(attributes[i]));
 		}
-		String[] classValues = config.getParam("CLASS_VALUES", " ");
+		String[] classValues = featureConfig.getParam("CLASS_VALUES", " ");
 		weka.core.FastVector classAtt = new weka.core.FastVector();
 		for (int i = 0; i < classValues.length; i++) {
 			classAtt.addElement(classValues[i]);
@@ -126,18 +131,19 @@ public class PageClassifier {
 	public static void main(String[] args) {
   		try{
   			PageClassifier classifier = PageClassifier.loadClassifier(args[0]);
-		long startTime = System.currentTimeMillis();
-		for (int i = 0; i< 1000; i++){
-        File file = new File(args[1]);
-        FileInputStream fis = new FileInputStream(file);
-        byte[] data = new byte[(int)file.length()];
-        fis.read(data);
-        fis.close();
-        String s = new String(data, "UTF-8");
-        double prob = classifier.classify(s)[0];}
-		long stopTime = System.currentTimeMillis();
-		System.out.println(stopTime-startTime);
-		//System.out.println(String.valueOf(prob));        
+			long startTime = System.currentTimeMillis();
+			for (int i = 0; i< 10; i++){
+	        	File file = new File(args[1]);
+   		    	FileInputStream fis = new FileInputStream(file);
+        		byte[] data = new byte[(int)file.length()];
+	        	fis.read(data);
+    	    	fis.close();
+        		String s = new String(data, "UTF-8");
+	        	double prob = classifier.classify(s)[0];
+				System.out.println("Prob = "  + String.valueOf(prob));        
+			}
+			long stopTime = System.currentTimeMillis();
+			System.out.println("Total time to classify 10 documents: " + String.valueOf(stopTime-startTime) + " miliseconds");
   		}catch(Exception ex){
   			ex.printStackTrace();
   		}
