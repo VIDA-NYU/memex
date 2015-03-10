@@ -1,0 +1,33 @@
+{
+    "page" : {
+	"_id" : {
+            "path" : "url"
+        },
+        "properties" : {
+	    "url" : {
+		"type" : "string",
+		"index" : "not_analyzed"
+	    },
+            "text" : {
+		"type" : "string",
+		"analyzer": "html",
+		"term_vector" : "yes"
+	    },
+	    "fetched" : {"type" : "date"},
+	    "thumbnail" : {"type" : "binary" },
+	    "tag" : {
+		"type" : "string"
+	    },
+	    "class" : {
+		"type" : "string"
+	    },
+	    "topic_name" : {
+		"type" : "string",
+		"index" : "not_analyzed"
+	    },
+	    "topic_weight" : {
+		"type" : "float"
+	    }
+        }
+    }
+}
