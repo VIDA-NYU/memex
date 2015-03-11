@@ -42,6 +42,8 @@ Run the script with urls as parameters:
 
 You can repeat is as much as you want. ElasticSearch will load everything and index it.
 
+
+
 ## Search Documents
 
 A simple search program can be used as:

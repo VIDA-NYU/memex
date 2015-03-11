@@ -10,7 +10,6 @@
 	    },
             "text" : {
 		"type" : "string",
-		"analyzer": "html",
 		"term_vector" : "yes"
 	    },
 	    "fetched" : {"type" : "date"},
