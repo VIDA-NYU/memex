@@ -80,13 +80,17 @@ class WordSaliency:
             word = sw[idx][1]
             #print word
             idx -= 1
-        ret = []
+        #ret = []
+        out = open(self.output, "w")
         for i in range(top):
-            print words[sw[i][1]]
-            ret.append(words[sw[i][1]] + ":" + str(sw[i][1]))
+            word = words[sw[i][1]]
+            index = sw[i][1] #use if you want to find where it is in the term index
+            out.write(word + "\n")
+            #ret.append(words[sw[i][1]] + ":" + str(sw[i][1]))
+        out.close()
        
-#        with open(self.output, "w") as f:
-#            json.dump(ret, f)
+        #with open(self.output, "w") as f:
+        #    json.dump(ret, f)
     
     #Compress the output file into gzip
     def compress(self):
@@ -106,7 +110,10 @@ class WordSaliency:
 if __name__=="__main__":
     top = 10000
     path = "."
-    
-    ws = WordSaliency(path + "/lda-e504ca40-100-4389f3fb/02000/topic-term-distributions.csv.gz", path + "/lda-e504ca40-100-4389f3fb/02000/term-index.txt", "salient-terms.json")
+    topic_term_dist_file = path +  "/lda-e504ca40-100-4389f3fb/02000/topic-term-distributions.csv.gz"
+    term_index_file = path +  "/lda-e504ca40-100-4389f3fb/02000/term-index.txt"
+    outputfile = path + "/salient-terms.csv"
+    ws = WordSaliency(topic_term_dist_file, term_index_file, outputfile)
+    #ws = WordSaliency(path + "/lda-e504ca40-100-4389f3fb/02000/topic_term_distributions.csv.gz", path + "/lda-e504ca40-100-4389f3fb/02000/term-index.txt", "salient-terms.csv")
     ws.saliency(top)
     #ws.compress()
