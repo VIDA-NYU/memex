@@ -7,21 +7,44 @@ import urllib2
 import urlparse
 import os
 import sys
+import base64
+import hashlib
+
 from tempfile import mkstemp
 
 def compute_index_entry(url, useTika=False):
     try:
-        doc = urllib2.urlopen(url).read()
+        response = urllib2.urlopen(url)
+        html = response.read()
+        header = response.info()
+        retrieved = apply(datetime, header.getdate('Date')[:6])
+        length = header.getheader('Content-Length')
+        if length is None:
+            length = len(html)
+        md5 = header.getheader('Content-MD5')
+        if md5 is None:
+            md5 = hashlib.md5(html).hexdigest()
+        trueurl = response.geturl()
+
         if useTika:
-            doc = extract_text(doc, url)
+            doc = extract_text(html, url)
         entry = {
-            'url': url,
+            'url': trueurl,
+            'html': base64.b64encode(html),
             'text': doc,
-            'fetched': datetime.now(),
+            'length': length,
+            'md5': md5
         }
+        last_mod = header.getdate('Last-Modified')
+        if last_mod: 
+            last_mod = apply(datetime, last_mod[:6])
+            entry['last_modified'] = last_mod
+        if trueurl != url:
+            entry['redirect'] = trueurl
         return entry
     except:
-        print >>sys.stderr, "Unexpected error:", sys.exc_info()[0]
+        info = sys.exc_info()
+        print >>sys.stderr, "Unexpected error:", info[0], info[1]
         pass
     return None
 
@@ -34,7 +57,8 @@ def extract_text(doc, url):
         os.close(handle)
         (doc, metadata) = tika(tmppath, url)
     except:
-        print >>sys.stderr, "Unexpected error:", sys.exc_info()[0]
+        info = sys.exc_info()
+        print >>sys.stderr, "Unexpected error:", info[0], info[1]
         pass
     os.unlink(tmppath)
     return doc
@@ -45,7 +69,6 @@ def add_document(entries):
     es.bulk([es.index_op(doc) for doc in entries],
             index='memex',
             doc_type='page')
-    
 if __name__ == "__main__":
     if len(sys.argv)>1:
         urls = sys.argv[1:]
@@ -60,9 +83,6 @@ if __name__ == "__main__":
         print 'Retrieving url %s' % url
         e = compute_index_entry(url,True)
         if e: entries.append(e)
-
-    add_document(entries)
-            
-        
-        
-
+    
+    if len(entries):
+        add_document(entries)

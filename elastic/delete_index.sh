@@ -1,1 +1,1 @@
-curl -XDELETE 'http://localhost:9200/memex/' 
+curl -XDELETE 'http://localhost:9200/memex/'; echo
