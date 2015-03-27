@@ -3,7 +3,8 @@
 ## prepare the CLASSPATH **before** importing jnius
 import os, re
 
-os.environ['CLASSPATH'] = "lib/tika-app-1.7.jar"
+dir = os.path.dirname(os.path.realpath(__file__))
+os.environ['CLASSPATH'] = dir+"/lib/tika-app-1.7.jar"
 
 from jnius import autoclass
 

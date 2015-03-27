@@ -12,7 +12,17 @@
 		"type" : "string",
 		"term_vector" : "yes"
 	    },
-	    "fetched" : {"type" : "date"},
+	    "html" : {
+		"type" : "binary"
+	    },
+	    "retrieved" : {"type" : "date"},
+	    "last_modified" : {"type" : "date"},
+	    "length" : {"type" : "integer"},
+	    "md5" : {"type" : "binary"},
+	    "redirect" : {
+		"type" : "string",
+		"index" : "not_analyzed"
+	    },
 	    "thumbnail" : {"type" : "binary" },
 	    "tag" : {
 		"type" : "string"
