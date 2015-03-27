@@ -3,7 +3,7 @@
 ## prepare the CLASSPATH **before** importing jnius
 import os, re
 
-os.environ['CLASSPATH'] = "lib/tika-app-1.7.jar"
+os.environ['CLASSPATH'] = os.environ['MEMEX_HOME']+"/elastic/lib/tika-app-1.7.jar"
 
 from jnius import autoclass
 
