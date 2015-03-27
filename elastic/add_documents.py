@@ -1,13 +1,12 @@
 #!/usr/bin/python
 from pyelasticsearch import ElasticSearch
-
 from tika import tika
 
 from datetime import datetime
 import urllib2
 import urlparse
-import sys
 import os
+import sys
 from tempfile import mkstemp
 
 def compute_index_entry(url, useTika=False):
@@ -41,7 +40,12 @@ def extract_text(doc, url):
     return doc
 
 
-
+def add_document(entries):
+    es = ElasticSearch('http://localhost:9200/')
+    es.bulk([es.index_op(doc) for doc in entries],
+            index='memex',
+            doc_type='page')
+    
 if __name__ == "__main__":
     if len(sys.argv)>1:
         urls = sys.argv[1:]
@@ -56,10 +60,9 @@ if __name__ == "__main__":
         print 'Retrieving url %s' % url
         e = compute_index_entry(url,True)
         if e: entries.append(e)
-    if len(entries):
-        es = ElasticSearch('http://localhost:9200/')
-        es.bulk((es.index_op(doc) for doc in entries),
-                index='memex',
-                doc_type='page')
 
+    add_document(entries)
+            
+        
+        
 
