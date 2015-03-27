@@ -69,6 +69,7 @@ def add_document(entries):
     es.bulk([es.index_op(doc) for doc in entries],
             index='memex',
             doc_type='page')
+
 if __name__ == "__main__":
     if len(sys.argv)>1:
         urls = sys.argv[1:]
