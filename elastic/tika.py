@@ -16,7 +16,7 @@ FileInputStream = autoclass('java.io.FileInputStream')
 PropertyConfigurator = autoclass('org.apache.log4j.PropertyConfigurator')
 
 #BasicConfigurator.configure()
-PropertyConfigurator.configure('lib/log4j.txt')
+PropertyConfigurator.configure(dir+'/lib/log4j.txt')
 
 def tika(filename, url=None, contentType=None,maxLength=None,clean=True):
     tika = Tika()
