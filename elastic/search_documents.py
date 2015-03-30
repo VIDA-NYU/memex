@@ -1,23 +1,29 @@
 #!/usr/bin/python
 from pyelasticsearch import ElasticSearch
 import sys
-import pprint
 
+def search(field, query):
 
-if len(sys.argv) > 1:
-    es = ElasticSearch('http://localhost:9200/')
-    
-    query = {
-        "query" : {
-            "query_string": {
-                "query": "text:"+' '.join(sys.argv[1:])
+    if len(query) > 0:
+        es = ElasticSearch('http://localhost:9200/')
+        
+        query = {
+            "query" : {
+                "query_string": {
+                    "query": field +':'+' '.join(query[0:])
+                }
             }
         }
-    }
-    res = es.search(query, index='memex', doc_type='page')
-    hits = res['hits']
-    print 'Document found: %d' % hits['total']
-    for doc in hits['hits']:
-        print '\turl: %s' % doc['_id']
-    #pprint.pprint(res)
+        print query
+        res = es.search(query, index='memex', doc_type='page')
+        hits = res['hits']
+        print 'Document found: %d' % hits['total']
+        return hits['hits']
 
+
+if __name__ == "__main__":
+    print sys.argv[1:]
+    docs = search(sys.argv[1],sys.argv[2:])
+    for doc in docs:
+        print '\turl: %s' % doc['_id']
+        
