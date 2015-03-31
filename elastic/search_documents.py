@@ -1,12 +1,16 @@
 #!/usr/bin/python
 from pyelasticsearch import ElasticSearch
 import sys
+import base64
 
 def search(field, query):
 
     if len(query) > 0:
         es = ElasticSearch('http://localhost:9200/')
         
+        if field in ['html']:
+            query = [base64.b64encode(q) for q in query]
+
         query = {
             "query" : {
                 "query_string": {
