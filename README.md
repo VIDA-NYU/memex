@@ -1,3 +1,1 @@
-Focused Crawler Ecosystem
-============
-Collaboration between NYU VIDA Team and Continuum Analytics in DARPA MEMEX Program.
+This repository contains satelite projects of [ache](https://github.com/ViDA-NYU/ache/wiki), a focused crawler.
