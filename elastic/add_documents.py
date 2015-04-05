@@ -62,7 +62,7 @@ def extract_text(doc, url):
         pass
     os.unlink(tmppath)
     return doc
-
+    
 
 def add_document(entries):
     es = ElasticSearch('http://localhost:9200/')
@@ -72,12 +72,18 @@ def add_document(entries):
 
 if __name__ == "__main__":
     if len(sys.argv)>1:
-        urls = sys.argv[1:]
+        inputfile = sys.argv[1]
+        urls = []
+        with open(inputfile, 'r') as f:
+            for line in f:
+                urls.append(line.strip())
     else:
         urls = [
-            'https://docs.python.org/2/library/urlparse.html',
-            'http://logging.apache.org/log4j/1.2/manual.html',
-            'http://en.wikipedia.org/wiki/Paris'
+            'http://en.wikipedia.org/wiki/Dark_internet',
+            'http://www.dailymail.co.uk/.../article-3017888/...details-sold-dark-web.html',
+            'http://en.wikipedia.org/wiki/Deep_Web',
+            'http://www.rogerdavies.com/2011/06/dark-internet',
+            'http://www.straightdope.com/.../read/3092/how-can-i-access-the-deep-dark-web'
         ]
     entries = []
     for url in urls:
