@@ -2,21 +2,22 @@
 from pyelasticsearch import ElasticSearch
 import sys
 import base64
-
+import pprint
+from os import environ
+        
 def search(field, query):
 
     if len(query) > 0:
         es = ElasticSearch('http://localhost:9200/')
-        
-        if field in ['html']:
-            query = [base64.b64encode(q) for q in query]
 
         query = {
-            "query" : {
+            "query": {
                 "query_string": {
-                    "query": field +':'+' '.join(query[0:])
+                    "fields" : [field],
+                    "query": ' and  '.join(query[0:]),
                 }
-            }
+            },
+            "fields": [field]
         }
         print query
         res = es.search(query, index='memex', doc_type='page')
@@ -24,10 +25,37 @@ def search(field, query):
         print 'Document found: %d' % hits['total']
         return hits['hits']
 
+def get_context(query):
+
+    if len(query) > 0:
+        es = ElasticSearch('http://localhost:9200/')
+
+        query = {
+            "query": {
+                "query_string": {
+                    "fields" : ["text"],
+                    "query": ' and  '.join(query[0:]),
+                }
+            },
+            "fields": ["text"],
+            "highlight" : {
+                "fields" : {
+                    "text": {
+                        "fragment_size" : 100, "number_of_fragments" : 1
+                    }
+                }
+            }
+        }
+        print query
+        res = es.search(query, index='memex', doc_type='page')
+        hits = res['hits']
+        print 'Document found: %d' % hits['total']
+        highlights = []
+        for hit in hits['hits']:
+            highlights.append(hit['highlight']['text'])
+        return highlights
 
 if __name__ == "__main__":
     print sys.argv[1:]
-    docs = search(sys.argv[1],sys.argv[2:])
-    for doc in docs:
-        print '\turl: %s' % doc['_id']
-        
+    #search(sys.argv[1], sys.argv[2:])
+    print get_context(sys.argv[1:])
