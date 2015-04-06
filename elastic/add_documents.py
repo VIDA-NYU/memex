@@ -9,10 +9,11 @@ import os
 import sys
 import base64
 import hashlib
+from boilerpipe import boilerpipe
 
 from tempfile import mkstemp
 
-def compute_index_entry(url, useTika=False):
+def compute_index_entry(url, extractType='tika'):
     try:
         response = urllib2.urlopen(url)
         html = response.read()
@@ -26,8 +27,10 @@ def compute_index_entry(url, useTika=False):
             md5 = hashlib.md5(html).hexdigest()
         trueurl = response.geturl()
 
-        if useTika:
-            doc = extract_text(html, url)
+        if 'boilerpipe' in extractType:
+            doc = boilerpipe(html=html)
+        elif 'tika' in extractType:
+            doc = extract_text(html,url)
         entry = {
             'url': trueurl,
             'html': base64.b64encode(html),
@@ -88,7 +91,7 @@ if __name__ == "__main__":
     entries = []
     for url in urls:
         print 'Retrieving url %s' % url
-        e = compute_index_entry(url,True)
+        e = compute_index_entry(url=url)
         if e: entries.append(e)
     
     if len(entries):
