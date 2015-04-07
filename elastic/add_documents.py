@@ -73,6 +73,13 @@ def add_document(entries):
             index='memex',
             doc_type='page')
 
+def update_document(url,doc):
+    es = ElasticSearch('http://localhost:9200/')
+    es.update(index='memex',
+              doc_type='page',
+              id=url,
+              script=doc)
+
 if __name__ == "__main__":
     if len(sys.argv)>1:
         inputfile = sys.argv[1]
