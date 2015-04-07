@@ -22,7 +22,7 @@ import extract_terms
 class SeedCrawlerModel:
     #Note: we should estimate the latency of each operation so that the application could adapt smoothly
 
-    def __init__(self, urls):
+    def __init__(self, urls = []):
         #Intermediate data will being handled here: urls, extracted text, terms, clusters, etc.
 
         #list of urls and their labels, ranking scores
@@ -59,11 +59,13 @@ class SeedCrawlerModel:
         
         call(["rm", "-rf", "html"])
         call(["mkdir", "-p", "html"])
+        call(["rm", "-rf", "thumbnails"])
+        call(["mkdir", "-p", "thumbnails"])
         
         if sys.platform in ['darwin','linux2']:
-            download("results.txt","html")
+            download("results.txt")
         else:
-            download("results.txt","html", parallel=True)
+            download("results.txt", parallel=True)
 
         if exists(self.memex_home + "/seed_crawler/ranking/exclude.txt"):
             call(["rm", self.memex_home + "/seed_crawler/ranking/exclude.txt"])
@@ -148,7 +150,13 @@ class SeedCrawlerModel:
         all_docs = get_bag_of_words(self.urls)
         tf = tfidf.tfidf()
         tf.process(all_docs)
-        return tf.getTfArray(all_docs.keys())
+        return tf.getTfArray()
+
+    def term_tfidf(self, urls):
+        all_docs = get_bag_of_words(self.urls)
+        tf = tfidf.tfidf()
+        tf.process(all_docs)
+        return tf.getTfidfArray()
 
     def submit_selected_terms(self, positive, negative):
     #Rerank the terms based on the labeled terms
@@ -214,12 +222,10 @@ class SeedCrawlerModel:
 
 if __name__=="__main__":
     scm = SeedCrawlerModel([])
-    urls =scm.submit_query_terms(["elsa"])
+    urls =scm.submit_query_terms(["gun control"])
     
-    [urls, corpus, data] = scm.term_frequency(urls)
+    [urls, corpus, data] = scm.term_tfidf(urls)
     
-    print corpus
-
     #scm.test()
     #Create a test that mimick user process here to test
     #1. User starts with some terms
