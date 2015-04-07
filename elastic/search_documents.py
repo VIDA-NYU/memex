@@ -32,12 +32,13 @@ def get_context(query):
 
         query = {
             "query": {
-                "query_string": {
-                    "fields" : ["text"],
-                    "query": ' and  '.join(query[0:]),
+                "match": {
+                    "text": {
+                        "query": ' and  '.join(query[0:]),
+                        "operator" : "and"
+                    }
                 }
             },
-            "fields": ["text"],
             "highlight" : {
                 "fields" : {
                     "text": {
