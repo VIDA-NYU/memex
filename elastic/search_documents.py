@@ -5,16 +5,19 @@ import base64
 import pprint
 from os import environ
         
-def search(field, query):
+def search(field, queryStr):
+    es_server = 'http://localhost:9200/'
+    if environ.get('ELASTICSEARCH_SERVER'):
+        es_server = environ['ELASTICSEARCH_SERVER']
+    es = ElasticSearch(es_server)
 
     if len(query) > 0:
-        es = ElasticSearch('http://localhost:9200/')
 
         query = {
             "query": {
                 "query_string": {
                     "fields" : [field],
-                    "query": ' and  '.join(query[0:]),
+                    "query": ' and  '.join(queryStr[0:]),
                 }
             },
             "fields": [field]
@@ -25,16 +28,19 @@ def search(field, query):
         print 'Document found: %d' % hits['total']
         return hits['hits']
 
-def get_context(query):
+def get_context(terms):
+    es_server = 'http://localhost:9200/'
+    if environ.get('ELASTICSEARCH_SERVER'):
+        es_server = environ['ELASTICSEARCH_SERVER']
+    es = ElasticSearch(es_server)
 
-    if len(query) > 0:
-        es = ElasticSearch('http://localhost:9200/')
+    if len(terms) > 0:
 
         query = {
             "query": {
                 "match": {
                     "text": {
-                        "query": ' and  '.join(query[0:]),
+                        "query": ' and  '.join(terms[0:]),
                         "operator" : "and"
                     }
                 }
