@@ -4,7 +4,10 @@
 import os, re
 
 dir = os.path.dirname(os.path.realpath(__file__))
-os.environ['CLASSPATH'] = dir+"/lib/tika-app-1.7.jar"
+try:
+    os.environ['CLASSPATH'] = os.environ['CLASSPATH'] + os.pathsep + dir+"/lib/tika-app-1.7.jar"
+except KeyError, ex: 
+    os.environ['CLASSPATH'] = dir+"/lib/tika-app-1.7.jar"
 
 from jnius import autoclass
 
