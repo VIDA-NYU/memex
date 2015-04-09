@@ -4,7 +4,10 @@
 import os, re
 
 dir = os.path.dirname(os.path.realpath(__file__))
-os.environ['CLASSPATH'] = dir+"/lib/boilerpipe-1.2.0.jar:"+dir+"/lib/nekohtml-1.9.13.jar:"+dir+"/lib/xerces-2.9.1.jar"
+try:
+    os.environ['CLASSPATH'] = os.environ['CLASSPATH']+ os.pathsep +dir+"/lib/boilerpipe-1.2.0.jar:"+dir+"/lib/nekohtml-1.9.13.jar:"+dir+"/lib/xerces-2.9.1.jar"
+except KeyError, ex:
+    os.environ['CLASSPATH'] = dir+"/lib/boilerpipe-1.2.0.jar:"+dir+"/lib/nekohtml-1.9.13.jar:"+dir+"/lib/xerces-2.9.1.jar"
 
 from jnius import autoclass
 
