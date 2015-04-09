@@ -2,9 +2,13 @@
 from pyelasticsearch import ElasticSearch
 import sys
 import pprint
+from os import environ
 
+es_server = 'http://localhost:9200/'
+if environ.get('ELASTICSEARCH_SERVER'):
+    es_server = environ['ELASTICSEARCH_SERVER']
+es = ElasticSearch(es_server)
 
-es = ElasticSearch('http://localhost:9200/')
 query = {
     "query": {
         "match_all": {}
