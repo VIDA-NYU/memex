@@ -2,7 +2,6 @@
 from pyelasticsearch import ElasticSearch
 
 from tika import tika
-from boilerpipe import boilerpipe
 
 from datetime import datetime
 import urlparse
@@ -15,6 +14,27 @@ import requests
 import linecache
 
 from tempfile import mkstemp
+
+from subprocess import Popen, PIPE, STDOUT
+
+def boilerpipe(html):
+    try:
+        os.chdir(os.environ['MEMEX_HOME'] + '/seed_crawler/lda_pipeline')
+        comm = "java -cp .:class/:lib/boilerpipe-1.2.0.jar:lib/nekohtml-1.9.13.jar:lib/xerces-2.9.1.jar Extract"
+        p=Popen(comm, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+        output, errors = p.communicate(input=html)
+        return output
+    except:
+        _, exc_obj, tb = sys.exc_info()
+        f = tb.tb_frame
+        lineno = tb.tb_lineno
+        filename = f.f_code.co_filename
+        linecache.checkcache(filename)
+        line = linecache.getline(filename, lineno, f.f_globals)
+        print 'EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj)
+        print url
+        pass
+    return None
 
 def compute_index_entry(url, extractType='tika'):
     try:
