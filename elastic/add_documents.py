@@ -19,8 +19,7 @@ from subprocess import Popen, PIPE, STDOUT
 
 def boilerpipe(html):
     try:
-        os.chdir(os.environ['MEMEX_HOME'] + '/seed_crawler/lda_pipeline')
-        comm = "java -cp .:class/:lib/boilerpipe-1.2.0.jar:lib/nekohtml-1.9.13.jar:lib/xerces-2.9.1.jar Extract"
+        comm = "java -cp .:class/:libs/boilerpipe-1.2.0.jar:libs/nekohtml-1.9.13.jar:libs/xerces-2.9.1.jar Extract"
         p=Popen(comm, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
         output, errors = p.communicate(input=html)
         return output
