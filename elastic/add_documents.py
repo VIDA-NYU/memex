@@ -1,36 +1,44 @@
 #!/usr/bin/python
 from pyelasticsearch import ElasticSearch
+
 from tika import tika
+from boilerpipe import boilerpipe
 
 from datetime import datetime
-import urllib2
 import urlparse
 import os
 import sys
 import base64
 import hashlib
-from boilerpipe import boilerpipe
+import requests
+
+import linecache
 
 from tempfile import mkstemp
 
 def compute_index_entry(url, extractType='tika'):
     try:
-        response = urllib2.urlopen(url)
-        html = response.read()
-        header = response.info()
-        retrieved = apply(datetime, header.getdate('Date')[:6])
-        length = header.getheader('Content-Length')
-        if length is None:
+        response = requests.get(url)
+        html = response.text.encode('utf-8')
+        header = response.headers
+
+        retrieved = header['date']
+        try:
+            length = header['content-length']
+        except KeyError:
             length = len(html)
-        md5 = header.getheader('Content-MD5')
-        if md5 is None:
+        try:
+            md5 = header['content-md5']
+        except KeyError:
             md5 = hashlib.md5(html).hexdigest()
-        trueurl = response.geturl()
+
+        trueurl = response.url
 
         if 'boilerpipe' in extractType:
             doc = boilerpipe(html=html)
         elif 'tika' in extractType:
             doc = extract_text(html,url)
+
         entry = {
             'url': trueurl,
             'html': base64.b64encode(html),
@@ -38,16 +46,19 @@ def compute_index_entry(url, extractType='tika'):
             'length': length,
             'md5': md5
         }
-        last_mod = header.getdate('Last-Modified')
-        if last_mod: 
-            last_mod = apply(datetime, last_mod[:6])
-            entry['last_modified'] = last_mod
+
         if trueurl != url:
             entry['redirect'] = trueurl
         return entry
     except:
-        info = sys.exc_info()
-        print >>sys.stderr, "Unexpected error:", info[0], info[1]
+        _, exc_obj, tb = sys.exc_info()
+        f = tb.tb_frame
+        lineno = tb.tb_lineno
+        filename = f.f_code.co_filename
+        linecache.checkcache(filename)
+        line = linecache.getline(filename, lineno, f.f_globals)
+        print 'EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj)
+        print url
         pass
     return None
 
@@ -60,21 +71,25 @@ def extract_text(doc, url):
         os.close(handle)
         (doc, metadata) = tika(tmppath, url)
     except:
-        info = sys.exc_info()
-        print >>sys.stderr, "Unexpected error:", info[0], info[1]
+        _, exc_obj, tb = sys.exc_info()
+        f = tb.tb_frame
+        lineno = tb.tb_lineno
+        filename = f.f_code.co_filename
+        linecache.checkcache(filename)
+        line = linecache.getline(filename, lineno, f.f_globals)
+        print 'EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj)
+        print url
         pass
     os.unlink(tmppath)
     return doc
     
 
-def add_document(entries):
-    es = ElasticSearch('http://localhost:9200/')
+def add_document(entries, es = ElasticSearch('http://localhost:9200/')):
     es.bulk([es.index_op(doc) for doc in entries],
             index='memex',
             doc_type='page')
 
-def update_document(url,doc):
-    es = ElasticSearch('http://localhost:9200/')
+def update_document(url,doc, es = ElasticSearch('http://localhost:9200/')):
     es.update(index='memex',
               doc_type='page',
               id=url,
@@ -99,6 +114,7 @@ if __name__ == "__main__":
     for url in urls:
         print 'Retrieving url %s' % url
         e = compute_index_entry(url=url)
+
         if e: entries.append(e)
     
     if len(entries):
