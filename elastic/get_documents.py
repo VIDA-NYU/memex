@@ -3,7 +3,12 @@ from pyelasticsearch import ElasticSearch
 import sys
 from os import environ
 
-def get_documents(urls, es = ElasticSearch('http://localhost:9200/')):
+def get_documents(urls):
+    es_server = 'http://localhost:9200/'
+    if environ.get('ELASTICSEARCH_SERVER'):
+        es_server = environ['ELASTICSEARCH_SERVER']
+    es = ElasticSearch(es_server)
+        
     if len(urls) > 0:
         results = {}
 
