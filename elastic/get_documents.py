@@ -1,11 +1,10 @@
 #!/usr/bin/python
 from pyelasticsearch import ElasticSearch
 import sys
+from os import environ
 
-def get_documents(urls):
+def get_documents(urls, es = ElasticSearch('http://localhost:9200/')):
     if len(urls) > 0:
-        es = ElasticSearch('http://localhost:9200/')
-        
         results = {}
 
         for url in urls:
@@ -23,9 +22,9 @@ def get_documents(urls):
             try:
                 results[url] = hits['hits'][0]['fields']['text'][0]
             except KeyError, e:
-                print url, " not found in database"
+                print url, e, " not found in database"
             except IndexError, e:
-                print url, " not found in database"
+                print url, e, " not found in database"
 
         return results
 
