@@ -84,12 +84,22 @@ def extract_text(doc, url):
     return doc
     
 
-def add_document(entries, es = ElasticSearch('http://localhost:9200/')):
+def add_document(entries):
+    es_server = 'http://localhost:9200/'
+    if os.environ.get('ELASTICSEARCH_SERVER'):
+        es_server = os.environ['ELASTICSEARCH_SERVER']
+    es = ElasticSearch(es_server)
+
     es.bulk([es.index_op(doc) for doc in entries],
             index='memex',
             doc_type='page')
 
-def update_document(url,doc, es = ElasticSearch('http://localhost:9200/')):
+def update_document(url,doc):
+    es_server = 'http://localhost:9200/'
+    if os.environ.get('ELASTICSEARCH_SERVER'):
+        es_server = os.environ['ELASTICSEARCH_SERVER']
+    es = ElasticSearch(es_server)
+
     es.update(index='memex',
               doc_type='page',
               id=url,
