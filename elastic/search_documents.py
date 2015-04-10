@@ -49,9 +49,11 @@ def term_search(field, queryStr):
         print query
         res = es.search(query, index='memex', doc_type='page')
         hits = res['hits']
-        pprint.pprint(hits)
+        urls = []
+        for hit in hits['hits']:
+            urls.append(hit['_id'])
         print 'Document found: %d' % hits['total']
-        return hits['hits']
+        return urls
 
 def get_context(terms):
     es_server = 'http://localhost:9200/'
@@ -92,6 +94,6 @@ if __name__ == "__main__":
     if 'string' in sys.argv[1]:
         search(sys.argv[2], sys.argv[3:])
     elif 'term' in sys.argv[1]:
-        term_search(sys.argv[2], sys.argv[3:])
+        print term_search(sys.argv[2], sys.argv[3:])
     elif 'context' in sys.argv[1]:
         print get_context(sys.argv[2:])
