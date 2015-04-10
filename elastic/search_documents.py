@@ -47,12 +47,12 @@ def term_search(field, queryStr):
             "fields": ["url"]
             }
         print query
-        res = es.search(query, index='memex', doc_type='page')
+        res = es.search(query, index='memex', doc_type='page', size=500)
         hits = res['hits']
         urls = []
         for hit in hits['hits']:
             urls.append(hit['_id'])
-        print 'Document found: %d' % hits['total']
+        print len(urls), len(hits['hits'])
         return urls
 
 def get_context(terms):
@@ -94,6 +94,7 @@ if __name__ == "__main__":
     if 'string' in sys.argv[1]:
         search(sys.argv[2], sys.argv[3:])
     elif 'term' in sys.argv[1]:
-        print term_search(sys.argv[2], sys.argv[3:])
+        for url in term_search(sys.argv[2], sys.argv[3:]):
+            print url
     elif 'context' in sys.argv[1]:
         print get_context(sys.argv[2:])
