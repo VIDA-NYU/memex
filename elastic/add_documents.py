@@ -132,11 +132,15 @@ def update_document(url,doc):
     if os.environ.get('ELASTICSEARCH_SERVER'):
         es_server = os.environ['ELASTICSEARCH_SERVER']
     es = ElasticSearch(es_server)
-
-    es.update(index='memex',
-              doc_type='page',
-              id=url,
-              script=doc)
+    
+    try:
+        es.update(index='memex',
+                  doc_type='page',
+                  id=url,
+                  script=doc)
+    except ex:
+        print ex
+        pass
 
 if __name__ == "__main__":
     if len(sys.argv)>1:
