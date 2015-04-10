@@ -17,10 +17,15 @@ from tempfile import mkstemp
 
 from subprocess import Popen, PIPE, STDOUT
 
+import time
+
 def boilerpipe(html):
     try:
         comm = "java -cp .:class/:libs/boilerpipe-1.2.0.jar:libs/nekohtml-1.9.13.jar:libs/xerces-2.9.1.jar Extract"
-        p=Popen(comm, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+        p=Popen(comm, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT,
+                close_fds=True, # to avoid running out of file descriptors
+                bufsize=-1, # fully buffered (use zero (default) if no p.communicate())
+                universal_newlines=True) # translate newlines, encode/decode text
         output, errors = p.communicate(input=html)
         return output
     except:
@@ -31,7 +36,16 @@ def boilerpipe(html):
         linecache.checkcache(filename)
         line = linecache.getline(filename, lineno, f.f_globals)
         print 'EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj)
-        print url
+
+        if ('Errno 11' in exc_obj):
+            time.sleep(5)
+            comm = "java -cp .:class/:libs/boilerpipe-1.2.0.jar:libs/nekohtml-1.9.13.jar:libs/xerces-2.9.1.jar Extract"
+            p=Popen(comm, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT,
+                    close_fds=True, # to avoid running out of file descriptors
+                    bufsize=-1, # fully buffered (use zero (default) if no p.communicate())
+                    universal_newlines=True) # translate newlines, encode/decode text
+            output, errors = p.communicate(input=html)
+            return output
         pass
     return None
 
