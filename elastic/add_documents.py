@@ -138,8 +138,8 @@ def update_document(url,doc):
                   doc_type='page',
                   id=url,
                   script=doc)
-    except ex:
-        print ex
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
         pass
 
 if __name__ == "__main__":
