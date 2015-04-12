@@ -2,7 +2,6 @@
 from pyelasticsearch import ElasticSearch
 
 from tika import tika
-from boilerpipe import boilerpipe
 
 from datetime import datetime
 import urlparse
@@ -15,6 +14,40 @@ import requests
 import linecache
 
 from tempfile import mkstemp
+
+from subprocess import Popen, PIPE, STDOUT
+
+import time
+
+def boilerpipe(html):
+    try:
+        comm = "java -cp .:class/:libs/boilerpipe-1.2.0.jar:libs/nekohtml-1.9.13.jar:libs/xerces-2.9.1.jar Extract"
+        p=Popen(comm, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT,
+                close_fds=True, # to avoid running out of file descriptors
+                bufsize=-1, # fully buffered (use zero (default) if no p.communicate())
+                universal_newlines=True) # translate newlines, encode/decode text
+        output, errors = p.communicate(input=html)
+        return output
+    except:
+        _, exc_obj, tb = sys.exc_info()
+        f = tb.tb_frame
+        lineno = tb.tb_lineno
+        filename = f.f_code.co_filename
+        linecache.checkcache(filename)
+        line = linecache.getline(filename, lineno, f.f_globals)
+        print 'EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj)
+
+        if ('Errno 11' in exc_obj):
+            time.sleep(5)
+            comm = "java -cp .:class/:libs/boilerpipe-1.2.0.jar:libs/nekohtml-1.9.13.jar:libs/xerces-2.9.1.jar Extract"
+            p=Popen(comm, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT,
+                    close_fds=True, # to avoid running out of file descriptors
+                    bufsize=-1, # fully buffered (use zero (default) if no p.communicate())
+                    universal_newlines=True) # translate newlines, encode/decode text
+            output, errors = p.communicate(input=html)
+            return output
+        pass
+    return None
 
 def compute_index_entry(url, extractType='tika'):
     try:
@@ -99,11 +132,15 @@ def update_document(url,doc):
     if os.environ.get('ELASTICSEARCH_SERVER'):
         es_server = os.environ['ELASTICSEARCH_SERVER']
     es = ElasticSearch(es_server)
-
-    es.update(index='memex',
-              doc_type='page',
-              id=url,
-              script=doc)
+    
+    try:
+        es.update(index='memex',
+                  doc_type='page',
+                  id=url,
+                  script=doc)
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        pass
 
 if __name__ == "__main__":
     if len(sys.argv)>1:
