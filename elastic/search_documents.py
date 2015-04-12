@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from pyelasticsearch import ElasticSearch
 import sys
+import urllib2
 import base64
 import pprint
 from os import environ
@@ -55,6 +56,33 @@ def term_search(field, queryStr):
         print len(urls), len(hits['hits'])
         return urls
 
+def get_image(url, output_path=""):
+    es_server = 'http://localhost:9200/'
+    if environ.get('ELASTICSEARCH_SERVER'):
+        es_server = environ['ELASTICSEARCH_SERVER']
+    es = ElasticSearch(es_server)
+
+    if output_path:
+        output_path = output_path+'/'
+
+    if url:
+        query = {
+            "query": {
+                "term": {
+                    "url": url
+                }
+            },
+            "fields": ["thumbnail"]
+        }
+        res = es.search(query, index='memex', doc_type='page')
+        hits = res['hits']
+        if (len(hits) > 0):
+            img = base64.b64decode(hits['hits'][0]['fields']['thumbnail'][0])
+            with open(output_path+urllib2.quote(url).replace("/", "%2F")+'.png','wb') as f:
+                f.write(img)
+        else:
+            print "No thumbnail found"
+
 def get_context(terms):
     es_server = 'http://localhost:9200/'
     if environ.get('ELASTICSEARCH_SERVER'):
@@ -98,3 +126,5 @@ if __name__ == "__main__":
             print url
     elif 'context' in sys.argv[1]:
         print get_context(sys.argv[2:])
+    elif 'image' in sys.argv[1]:
+        get_image(sys.argv[2])
