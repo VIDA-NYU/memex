@@ -53,7 +53,6 @@ def term_search(field, queryStr):
         urls = []
         for hit in hits['hits']:
             urls.append(hit['_id'])
-        print len(urls), len(hits['hits'])
         return urls
 
 def get_image(url, output_path=""):
