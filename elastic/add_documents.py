@@ -55,6 +55,12 @@ def compute_index_entry(url, extractType='tika'):
         html = response.text.encode('utf-8')
         header = response.headers
 
+        try:
+            content_type = header['content-type']
+            if not 'text/html' in content_type:
+                return None
+        except KeyError:
+            return None
         retrieved = header['date']
         try:
             length = header['content-length']
@@ -137,7 +143,9 @@ def update_document(url,doc):
         es.update(index='memex',
                   doc_type='page',
                   id=url,
-                  script=doc)
+                  script=doc,
+                  upsert=True
+              )
     except:
         print "Unexpected error:", sys.exc_info()[0]
         pass
