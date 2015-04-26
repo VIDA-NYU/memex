@@ -1,5 +1,8 @@
 *.pyc
 *.log
 *~
+#*
 
 .DS_Store
+
+config.conf
