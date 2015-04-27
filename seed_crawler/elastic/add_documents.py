@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from pyelasticsearch import ElasticSearch
 
-from tika import tika
+#from tika import tika
 
 from datetime import datetime
 import urlparse

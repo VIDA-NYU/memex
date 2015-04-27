@@ -13,10 +13,9 @@ import sys
 
 from download import download, decode
 from concat_nltk import get_bag_of_words
-from search_documents import get_context, term_search
-import rank
-import tfidf
-import extract_terms
+from elastic.search_documents import get_context, term_search
+from ranking import tfidf, rank, extract_terms
+
 
 class SeedCrawlerModel:
     #Note: we should estimate the latency of each operation so that the application could adapt smoothly
