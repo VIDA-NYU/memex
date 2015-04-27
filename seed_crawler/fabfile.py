@@ -81,6 +81,7 @@ def make_virtual_env():
     "Make a virtual environment for local dev use"
     with lcd(PROJ_ROOT):
         local('virtualenv .')
+        local('./bin/pip install -r requirements.pre.txt')
         local('./bin/pip install -r requirements.txt')
 
 def install_node_packages():
