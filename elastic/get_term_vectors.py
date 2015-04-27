@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from pyelasticsearch import ElasticSearch
+from elasticsearch import ElasticSearch
 import sys
 import pprint
 from os import environ
