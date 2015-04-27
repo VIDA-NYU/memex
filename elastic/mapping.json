@@ -26,6 +26,7 @@
 		"type" : "string",
 		"index" : "not_analyzed"
 	    },
+	    "thumbnail_name" : {"type" : "string"},
 	    "thumbnail" : {"type" : "binary" },
 	    "tag" : {
 		"type" : "string"

@@ -3,14 +3,19 @@ from pyelasticsearch import ElasticSearch
 import sys
 import urllib2
 import base64
-import pprint
 from os import environ
         
 def search(field, queryStr):
-    print "field = ",field, "query str =", queryStr
     es_server = 'http://localhost:9200/'
+    es_index = 'memex'
+    es_doc_type = 'page'
     if environ.get('ELASTICSEARCH_SERVER'):
         es_server = environ['ELASTICSEARCH_SERVER']
+    if environ.get('ELASTICSEARCH_INDEX'):
+        es_index = environ['ELASTICSEARCH_INDEX']
+    if environ.get('ELASTICSEARCH_DOC_TYPE'):
+        es_doc_type = environ['ELASTICSEARCH_DOC_TYPE']
+        
     es = ElasticSearch(es_server)
 
     if len(queryStr) > 0:
@@ -24,7 +29,7 @@ def search(field, queryStr):
             "fields": [field]
         }
         print query
-        res = es.search(query, index='memex', doc_type='page')
+        res = es.search(query, index=es_index, doc_type=es_doc_type)
         hits = res['hits']
         print 'Document found: %d' % hits['total']
         return hits['hits']
@@ -40,29 +45,27 @@ def term_search(field, queryStr):
             "query" : {
                 "match": {
                     field: {
-                        "query": queryStr,
-                        "operator" : "and"
-                        }
+                        "query": ' '.join(queryStr),
+                        "minimum_should_match":"100%"
                     }
-                },
+                }
+            },
             "fields": ["url"]
-            }
+        }
         print query
         res = es.search(query, index='memex', doc_type='page', size=500)
+
         hits = res['hits']
         urls = []
         for hit in hits['hits']:
             urls.append(hit['_id'])
         return urls
 
-def get_image(url, output_path=""):
+def get_image(url):
     es_server = 'http://localhost:9200/'
     if environ.get('ELASTICSEARCH_SERVER'):
         es_server = environ['ELASTICSEARCH_SERVER']
     es = ElasticSearch(es_server)
-
-    if output_path:
-        output_path = output_path+'/'
 
     if url:
         query = {
@@ -71,16 +74,20 @@ def get_image(url, output_path=""):
                     "url": url
                 }
             },
-            "fields": ["thumbnail"]
+            "fields": ["thumbnail", "thumbnail_name"]
         }
         res = es.search(query, index='memex', doc_type='page')
-        hits = res['hits']
+        hits = res['hits']['hits']
         if (len(hits) > 0):
-            img = base64.b64decode(hits['hits'][0]['fields']['thumbnail'][0])
-            with open(output_path+urllib2.quote(url).replace("/", "%2F")+'.png','wb') as f:
-                f.write(img)
+            try:
+                img = base64.b64decode(hits[0]['fields']['thumbnail'][0])
+                img_name = hits[0]['fields']['thumbnail_name'][0]
+                return [img_name, img]
+            except KeyError:
+                print "No thumbnail found"
         else:
             print "No thumbnail found"
+    return [None, None]
 
 def get_context(terms):
     es_server = 'http://localhost:9200/'
