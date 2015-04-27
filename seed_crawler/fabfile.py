@@ -16,11 +16,11 @@ import sys
 import time
 
 PROJ_ROOT = os.path.dirname(env.real_fabfile)
-MEMEX_ROOT= os.path.join(PROJ_ROOT,'..')
+MEMEX_ROOT = os.path.join(PROJ_ROOT, '..')
 env.project_name = 'seed_crawler'
 env.python = 'python' if 'VIRTUAL_ENV' in os.environ else 'bin/python'
-env.nltk_data = PROJ_ROOT+'/nltk_data';
-env.pythonpath = PROJ_ROOT+'/seeds_generator/src:.';
+env.nltk_data = PROJ_ROOT + '/nltk_data'
+env.pythonpath = PROJ_ROOT + '/seeds_generator/src:.'
 
 
 @task
@@ -39,7 +39,7 @@ def setup():
     compile_seeds_generator()
     symlink_packages()
     #install_node_packages()
-    print ('\nDevelopment environment successfully created.')
+    print '\nDevelopment environment successfully created.'
 
 @task
 @runs_once
@@ -56,25 +56,23 @@ def make_settings():
         for line in fileinput.input(settings_file, inplace=True):
             print line.replace("tools.staticdir.root = .",
                                "tools.staticdir.root = {0}/{1}".format(
-                                   PROJ_ROOT,'vis/html')),
+                                   PROJ_ROOT, 'vis/html')),
 
 @task
 def runserver():
     "Run the development server"
-    with lcd(PROJ_ROOT), \
-      shell_env(NLTK_DATA=env['nltk_data'],
-                PYTHONPATH=env['pythonpath'],
-                MEMEX_HOME=MEMEX_ROOT):
+    with lcd(PROJ_ROOT), shell_env(NLTK_DATA=env['nltk_data'],
+                                   PYTHONPATH=env['pythonpath'],
+                                   MEMEX_HOME=MEMEX_ROOT):
         local('{python} sourcepin_api/seed_crawler_model.py'.format(**env))
         #local('{python} manage.py runserver --traceback'.format(**env))
 
 @task
 def runvis():
     "Run the development server"
-    with lcd(PROJ_ROOT), \
-      shell_env(NLTK_DATA=env['nltk_data'],
-                PYTHONPATH=env['pythonpath'],
-                MEMEX_HOME=MEMEX_ROOT):
+    with lcd(PROJ_ROOT), shell_env(NLTK_DATA=env['nltk_data'],
+                                   PYTHONPATH=env['pythonpath'],
+                                   MEMEX_HOME=MEMEX_ROOT):
         local('{python} vis/server.py'.format(**env))
 
 def make_virtual_env():
@@ -98,7 +96,7 @@ def install_nltk_data():
 
 def compile_seeds_generator():
     "Compile the sees generator."
-    with lcd(PROJ_ROOT+'/seeds_generator'):
+    with lcd(PROJ_ROOT + '/seeds_generator'):
         local('sh compile.sh')
 
 def symlink_packages():
@@ -117,5 +115,3 @@ def symlink_packages():
             local('ln -f -s {}'.format(os.path.dirname(module.__file__)))
     if missing:
         abort('Missing python packages: {}'.format(', '.join(missing)))
-
-
