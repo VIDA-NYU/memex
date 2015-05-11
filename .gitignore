@@ -1,10 +1,8 @@
-.gitignore
 *.pyc
 *.log
 *~
+#*
+
 .DS_Store
+
 config.conf
-*swp
-config.conf
-nohup.out
-queries.txt
