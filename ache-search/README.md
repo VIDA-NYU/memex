@@ -15,8 +15,8 @@ You should provide an object with two properties:
 Open the `index.html` in your browser.
 Alternatively, you can run in a server. Ex:
 
-   cd ache-search
-   python -m SimpleHTTPServer 8000
+    cd ache-search
+    python -m SimpleHTTPServer 8000
 
 Then go to: `http://localhost:8000`
 
