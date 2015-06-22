@@ -1,0 +1,32 @@
+.col-facets {
+  margin-left: -15px;
+  margin-right: 15px;
+  margin-top: 18px;
+}
+.searchhit {
+  margin-top: -15px;
+}
+.searchhit-snippet {
+  margin-top: 10px;
+}
+.searchhit .label {
+  vertical-align: middle;
+}
+.searchhit-title {
+  margin-top:-15px;
+  font-weight: bold;
+}
+.searchhit-url {
+  color:#006621;
+}
+hr {
+  border-color: #ddd;
+  margin-top:5px;
+}
+body {
+  background-color: #F3F3F3;
+  padding-top: 58px;
+}
+nav.navbar-inverse .navbar-brand, .navbar-default .navbar-nav>li>a {
+  color:#ddd;
+}
