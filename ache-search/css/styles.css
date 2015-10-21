@@ -13,11 +13,22 @@
   vertical-align: middle;
 }
 .searchhit-title {
+  margin-bottom: 2px;
+}
+.searchhit-title a {
   margin-top:-15px;
   font-weight: bold;
 }
 .searchhit-url {
   color:#006621;
+}
+.searchhit-desc {
+  padding:5px;
+  text-align: center;
+}
+.searchhit-desc img {
+  max-width:100%;
+  max-height: 100px;
 }
 hr {
   border-color: #ddd;
