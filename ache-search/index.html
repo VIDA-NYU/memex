@@ -101,7 +101,7 @@
         <div class="col-sm-12 col-md-12">
             <form class="navbar-form" role="search" style="padding: 10px 0px;">
               <div class="input-group">
-                  <input type="text" class="form-control" placeholder="Search" eui-query="ejs.MatchQuery('title', querystring)" ng-model="querystring" eui-enabled="querystring.length" />
+                  <input type="text" class="form-control" placeholder="Search" eui-query="ejs.QueryStringQuery(querystring)" ng-model="querystring" eui-enabled="querystring.length" />
                   <div class="input-group-btn">
                       <button class="btn btn-default"><i class="glyphicon glyphicon-search"></i></button>
                   </div>
