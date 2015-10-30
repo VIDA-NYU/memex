@@ -59,13 +59,35 @@
               <eui-checklist field="'topPrivateDomain'" size="10"></eui-checklist> <!-- ACTION: change to field to use as facet -->
             </div>
           </div>
+
+          <div class="panel panel-default">
+            <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Significant Terms</div>
+            <div class="panel-body">
+              <ul eui-aggregation="ejs.SignificantTermsAggregation('agg_relevant_terms').field('text').size(10)">
+                  <li ng-repeat="bucket in aggResult.buckets">{{bucket.key}} ({{bucket.doc_count}})</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="panel panel-default">
+            <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Date Histogram</div>
+            <div class="panel-body">
+              <ul eui-aggregation="ejs.DateHistogramAggregation('agg_date_hist').field('retrieved').interval('hour')">
+                  <li ng-repeat="bucket in aggResult.buckets">{{bucket.key_as_string}} ({{bucket.doc_count}})</li>
+              </ul>
+            </div>
+          </div>
+
+
+
+
           <div class="panel panel-default">
             <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Top-terms in title</div>
             <div class="panel-body">
               <eui-singleselect field="'title'" size="10"></eui-singleselect>
             </div>
           </div>
-           <div class="panel panel-default">
+          <div class="panel panel-default">
             <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Top-terms in &lt;meta&gt; tag</div>
             <div class="panel-body">
               <eui-singleselect field="'wordsMeta'" size="10"></eui-singleselect>
@@ -103,6 +125,7 @@
                 <p class="searchhit-snippet">{{doc._source | extractDescription | limitTo: 250}}...</p>
                 <ul class="list-inline">
                 <li><b> Fetched at:</b> <span class="label label-default">{{doc._source.retrieved | asDate | date:'medium'}}</span></li>
+                <li><b> Classified as:</b> <span class="label label-default">{{doc._type}}</span></li>
               </ul>
               </div>
             </div>
