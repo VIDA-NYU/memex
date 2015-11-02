@@ -41,3 +41,9 @@ body {
 nav.navbar-inverse .navbar-brand, .navbar-default .navbar-nav>li>a {
   color:#ddd;
 }
+.relevant {
+  color: #5cb85c;
+}
+.irrelevant {
+  color: #d9534f
+}

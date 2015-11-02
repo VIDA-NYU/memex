@@ -126,12 +126,20 @@
                 <ul class="list-inline">
                 <li><b> Fetched at:</b> <span class="label label-default">{{doc._source.retrieved | asDate | date:'medium'}}</span></li>
                 <li><b> Classified as:</b> <span class="label label-default">{{doc._type}}</span></li>
+                <li>
+                  <b>Actual label:</b>
+                  <button><span class="glyphicon glyphicon-thumbs-up" ng-click="markAsRelevant(doc._source)" ng-class="{'relevant':isRelevant(doc._source)}"></span></button>
+                  <button><span class="glyphicon glyphicon-thumbs-down" ng-click="markAsIrrelevant(doc._source)" ng-class="{'irrelevant':isIrrelevant(doc._source)}"></span></button>
+                </li>
               </ul>
               </div>
             </div>
           </div>
         </div>
         <hr />
+      </div>
+      <div style="text-align: right;">
+        <button class="btn btn-default" ng-click="downloadLabeledData()"><span class="glyphicon glyphicon-download"></span>&nbsp;Download Labeled Data</button>
       </div>
       <eui-simple-paging></eui-simple-paging>
     </div><!--/center-->
@@ -237,6 +245,65 @@
           $scope.currentDomain = $scope.domains[domainIndex];
         }
 
+        $scope.markAs = function(doc, feedback) {
+          console.log('markAs('+feedback+')');
+          if($scope.labels[$scope.currentDomain] === undefined) {
+            $scope.labels[$scope.currentDomain] = {};
+          }
+          var domainLabels = $scope.labels[$scope.currentDomain];
+          if(domainLabels[doc.url] === undefined) {
+            domainLabels[doc.url] = {};
+          }
+          domainLabels[doc.url].relevant = feedback;
+          console.log(domainLabels[doc.url].relevant + ' -> ' + doc.url);
+        }
+
+        $scope.markAsRelevant = function(doc) {
+          $scope.markAs(doc, true);
+        }
+
+        $scope.markAsIrrelevant = function(doc) {
+          $scope.markAs(doc, false);
+        }
+        
+        $scope.isRelevant = function(doc) {
+          var domainLabels = $scope.labels[$scope.currentDomain];
+          if(domainLabels !== undefined && domainLabels[doc.url] !== undefined) {
+            return domainLabels[doc.url].relevant === true;
+          } else {
+            return false;
+          }
+        }
+
+        $scope.isIrrelevant = function(doc) {
+          var domainLabels = $scope.labels[$scope.currentDomain];
+          if(domainLabels !== undefined && domainLabels[doc.url] !== undefined) {
+            return domainLabels[doc.url].relevant === false;
+          } else {
+            return false;
+          }
+        }
+
+        $scope.downloadLabeledData = function() {
+          var domainLabels = $scope.labels[$scope.currentDomain];
+          if(domainLabels === undefined) return;
+
+          var data = '';
+          for (var key in domainLabels) {
+             if (domainLabels.hasOwnProperty(key)) {
+                var obj = domainLabels[key];
+                data += key + '\t' + obj.relevant + '\n';
+             }
+          }
+
+          var dataBlob = new Blob([data],{type:'text/csv'})
+          var blobURL = (window.URL || window.webkitURL).createObjectURL(dataBlob);
+          var anchor = document.createElement("a");
+          anchor.download = "data.txt";
+          anchor.href = blobURL;
+          anchor.click();
+          (window.URL || window.webkitURL).revokeObjectURL(blobURL);
+        }
       }]);
   </script>
 </body>
