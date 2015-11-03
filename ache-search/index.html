@@ -78,9 +78,6 @@
             </div>
           </div>
 
-
-
-
           <div class="panel panel-default">
             <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Top-terms in title</div>
             <div class="panel-body">
@@ -128,8 +125,12 @@
                 <li><b> Classified as:</b> <span class="label label-default">{{doc._type}}</span></li>
                 <li>
                   <b>Actual label:</b>
-                  <button><span class="glyphicon glyphicon-thumbs-up" ng-click="markAsRelevant(doc._source)" ng-class="{'relevant':isRelevant(doc._source)}"></span></button>
-                  <button><span class="glyphicon glyphicon-thumbs-down" ng-click="markAsIrrelevant(doc._source)" ng-class="{'irrelevant':isIrrelevant(doc._source)}"></span></button>
+                  <button ng-click="markAsRelevant(doc)">
+                    <span class="glyphicon glyphicon-thumbs-up" ng-class="{'relevant':isRelevant(doc)}"></span>
+                  </button>
+                  <button ng-click="markAsIrrelevant(doc)">
+                    <span class="glyphicon glyphicon-thumbs-down" ng-class="{'irrelevant':isIrrelevant(doc)}"></span>
+                  </button>
                 </li>
               </ul>
               </div>
@@ -138,8 +139,13 @@
         </div>
         <hr />
       </div>
-      <div style="text-align: right;">
+      <div>
+        <div style="text-align: center;">
+          <b>Accuracy: </b>{{accuracy | number}} <b>Precision:</b> {{precision | number}} <b>Recall</b> {{recall | number}} <b>F1:</b> {{f1 | number}}</span>
+        </div>
+        <div style="text-align: center;">
         <button class="btn btn-default" ng-click="downloadLabeledData()"><span class="glyphicon glyphicon-download"></span>&nbsp;Download Labeled Data</button>
+        </div>
       </div>
       <eui-simple-paging></eui-simple-paging>
     </div><!--/center-->
@@ -241,22 +247,29 @@
         
         $scope.currentDomain = $scope.domains[0];
         $scope.labels = {};
+        $scope.precision = 0.000;
+        $scope.recall = 0.000;
+        $scope.accuracy = 0.000;
+        $scope.f1 = 0.000;
 
         $scope.changeIndex = function(domainIndex) {
           $scope.currentDomain = $scope.domains[domainIndex];
         }
 
         $scope.markAs = function(doc, feedback) {
-          console.log('markAs('+feedback+')');
           if($scope.labels[$scope.currentDomain] === undefined) {
             $scope.labels[$scope.currentDomain] = {};
           }
           var domainLabels = $scope.labels[$scope.currentDomain];
-          if(domainLabels[doc.url] === undefined) {
-            domainLabels[doc.url] = {};
+          if(domainLabels[doc._source.url] === undefined) {
+            domainLabels[doc._source.url] = {};
           }
-          domainLabels[doc.url].relevant = feedback;
-          console.log(domainLabels[doc.url].relevant + ' -> ' + doc.url);
+          
+          domainLabels[doc._source.url].relevant = feedback;
+          domainLabels[doc._source.url].classified_as = doc._type;
+
+          console.log(domainLabels[doc._source.url].relevant + ' -> ' + doc._source.url);
+          $scope.updateMetrics();
         }
 
         $scope.markAsRelevant = function(doc) {
@@ -266,23 +279,58 @@
         $scope.markAsIrrelevant = function(doc) {
           $scope.markAs(doc, false);
         }
+
+        $scope.getLabel = function(url) {
+          var domainLabels = $scope.labels[$scope.currentDomain];
+          if(domainLabels !== undefined && domainLabels[url] !== undefined) {
+            return domainLabels[url]
+          }
+        }
         
         $scope.isRelevant = function(doc) {
-          var domainLabels = $scope.labels[$scope.currentDomain];
-          if(domainLabels !== undefined && domainLabels[doc.url] !== undefined) {
-            return domainLabels[doc.url].relevant === true;
+          var label = $scope.getLabel(doc._source.url);
+          if(label !== undefined && label.relevant === true) {
+            return true;
           } else {
             return false;
           }
         }
 
         $scope.isIrrelevant = function(doc) {
-          var domainLabels = $scope.labels[$scope.currentDomain];
-          if(domainLabels !== undefined && domainLabels[doc.url] !== undefined) {
-            return domainLabels[doc.url].relevant === false;
+          var label = $scope.getLabel(doc._source.url);
+          if(label !== undefined && label.relevant === false) {
+            return true;
           } else {
             return false;
           }
+        }
+
+        $scope.updateMetrics = function() {
+          var domainLabels = $scope.labels[$scope.currentDomain];
+          if(domainLabels === undefined) return;
+          var data = '';
+          var tp = tn = fp = fn = 0;
+          for (var key in domainLabels) {
+             if (domainLabels.hasOwnProperty(key)) {
+                var doc = domainLabels[key];
+                if(doc.classified_as === 'target' && doc.relevant === true) {
+                  tp += 1;
+                }
+                if(doc.classified_as === 'negative' && doc.relevant === false) {
+                  tn += 1;
+                }
+                if(doc.classified_as === 'target' && doc.relevant === false) {
+                  fp += 1;
+                }
+                if(doc.classified_as === 'negative' && doc.relevant === true) {
+                  fn += 1;
+                }
+             }
+          }
+          $scope.precision = tp/(tp+fp);
+          $scope.recall = tp/(tp+fn);
+          $scope.accuracy = (tp+tn)/(tp+tn+fp+fn);
+          $scope.f1 = 2 * $scope.precision*$scope.recall/($scope.precision+$scope.recall);
         }
 
         $scope.downloadLabeledData = function() {
