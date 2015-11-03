@@ -140,11 +140,16 @@
         <hr />
       </div>
       <div>
+        <div style="text-align: center;padding-bottom: 15px;">
+          <button class="btn btn-default" ng-click="markAllAsIrrelevant(indexVM.results.hits.hits)"><span class="glyphicon glyphicon-thumbs-down"></span>&nbsp;Mark all as irrelevant</button>
+          <button class="btn btn-default" ng-click="markAllAsRelevant(indexVM.results.hits.hits)"><span class="glyphicon glyphicon-thumbs-up"></span>&nbsp;Mark all as Relevant</button>
+        </div>
+        <hr />
         <div style="text-align: center;">
           <b>Accuracy: </b>{{accuracy | number}} <b>Precision:</b> {{precision | number}} <b>Recall</b> {{recall | number}} <b>F1:</b> {{f1 | number}}</span>
         </div>
         <div style="text-align: center;">
-        <button class="btn btn-default" ng-click="downloadLabeledData()"><span class="glyphicon glyphicon-download"></span>&nbsp;Download Labeled Data</button>
+          <button class="btn btn-default" ng-click="downloadLabeledData()"><span class="glyphicon glyphicon-download"></span>&nbsp;Download Labeled Data</button>
         </div>
       </div>
       <eui-simple-paging></eui-simple-paging>
@@ -273,7 +278,7 @@
         }
 
         $scope.markAs = function(doc, feedback) {
-          
+
           var domainLabels = $scope.domainStorage;
           if(domainLabels[doc._source.url] === undefined) {
             domainLabels[doc._source.url] = {};
@@ -290,8 +295,20 @@
           $scope.markAs(doc, true);
         }
 
+        $scope.markAllAsRelevant = function(docs) {
+          for(index in docs) {
+            $scope.markAs(docs[index], true);
+          }
+        }
+
         $scope.markAsIrrelevant = function(doc) {
           $scope.markAs(doc, false);
+        }
+
+        $scope.markAllAsIrrelevant = function(docs) {
+          for(index in docs) {
+            $scope.markAs(docs[index], false);
+          }
         }
 
         $scope.getLabel = function(url) {
