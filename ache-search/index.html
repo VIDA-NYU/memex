@@ -251,21 +251,30 @@
         ];
         
         $scope.currentDomain = $scope.domains[0];
-        $scope.labels = {};
+
+        $scope.storage = $localStorage;
+
         $scope.precision = 0.000;
         $scope.recall = 0.000;
         $scope.accuracy = 0.000;
         $scope.f1 = 0.000;
 
+        $scope.initStorage = function() {
+          if($scope.storage[$scope.currentDomain.index] === undefined) {
+            $scope.storage[$scope.currentDomain.index] = {};
+          }
+          $scope.domainStorage = $scope.storage[$scope.currentDomain.index];
+        }
+        $scope.initStorage();
+
         $scope.changeIndex = function(domainIndex) {
           $scope.currentDomain = $scope.domains[domainIndex];
+          $scope.initStorage();
         }
 
         $scope.markAs = function(doc, feedback) {
-          if($localStorage[$scope.currentDomain] === undefined) {
-            $localStorage[$scope.currentDomain] = {};
-          }
-          var domainLabels = $localStorage[$scope.currentDomain];
+          
+          var domainLabels = $scope.domainStorage;
           if(domainLabels[doc._source.url] === undefined) {
             domainLabels[doc._source.url] = {};
           }
@@ -286,7 +295,7 @@
         }
 
         $scope.getLabel = function(url) {
-          var domainLabels = $localStorage[$scope.currentDomain];
+          var domainLabels = $scope.domainStorage;
           if(domainLabels !== undefined && domainLabels[url] !== undefined) {
             return domainLabels[url]
           }
@@ -311,9 +320,9 @@
         }
 
         $scope.updateMetrics = function() {
-          var domainLabels = $localStorage[$scope.currentDomain];
+          var domainLabels = $scope.domainStorage;
           if(domainLabels === undefined) return;
-          var data = '';
+          
           var tp = tn = fp = fn = 0;
           for (var key in domainLabels) {
              if (domainLabels.hasOwnProperty(key)) {
@@ -339,7 +348,7 @@
         }
 
         $scope.downloadLabeledData = function() {
-          var domainLabels = $localStorage[$scope.currentDomain];
+          var domainLabels = $scope.domainStorage;
           if(domainLabels === undefined) return;
 
           var data = 'URL\tclassified_as\tactual_label\n';
