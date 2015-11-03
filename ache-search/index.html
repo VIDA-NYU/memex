@@ -337,11 +337,11 @@
           var domainLabels = $scope.labels[$scope.currentDomain];
           if(domainLabels === undefined) return;
 
-          var data = '';
+          var data = 'URL\tclassified_as\tactual_label\n';
           for (var key in domainLabels) {
              if (domainLabels.hasOwnProperty(key)) {
                 var obj = domainLabels[key];
-                data += key + '\t' + obj.relevant + '\n';
+                data += key + '\t' + obj.classified_as + '\t' + (obj.relevant?'target':'negative') + '\n';
              }
           }
 
