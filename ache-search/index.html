@@ -156,19 +156,24 @@
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
   <script src="js/bootstrap.min.js"></script>
   <script src="js/URLUtils.js"></script>
-
-  <!-- ElastiUI -->
+  <!-- Angular.js -->
   <script src="http://code.angularjs.org/1.2.16/angular.js"></script>
+  <!-- Angular.js modules -->
+  <script src="https://rawgithub.com/gsklee/ngStorage/master/ngStorage.js"></script>
+  <!-- ElastiUI -->
   <script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elasticsearch.angular.js"></script>
   <script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elastic.js"></script>
   <script src="http://rawgit.com/YousefED/ElasticUI/master/dist/elasticui.min.js"></script>
   <script>
 
   angular
+      // ACHE-search app module
+      .module('ache-search', ['elasticui', 'ngStorage'])
       // ElasticUI config
-      .module('ache-search', ['elasticui'])
       .constant('euiHost', 'http://localhost:9200/')
+      //
       // Some text converters for formating search hits
+      //
       .filter("asDate", function () {
         return function (input) {
             return new Date(input);
@@ -220,7 +225,7 @@
           }
         }
       })
-      .controller('AcheSearchController', ['$scope', function($scope) {
+      .controller('AcheSearchController', ['$scope', '$localStorage', function($scope, $localStorage) {
 
         $scope.domains = [
           {
@@ -257,10 +262,10 @@
         }
 
         $scope.markAs = function(doc, feedback) {
-          if($scope.labels[$scope.currentDomain] === undefined) {
-            $scope.labels[$scope.currentDomain] = {};
+          if($localStorage[$scope.currentDomain] === undefined) {
+            $localStorage[$scope.currentDomain] = {};
           }
-          var domainLabels = $scope.labels[$scope.currentDomain];
+          var domainLabels = $localStorage[$scope.currentDomain];
           if(domainLabels[doc._source.url] === undefined) {
             domainLabels[doc._source.url] = {};
           }
@@ -281,7 +286,7 @@
         }
 
         $scope.getLabel = function(url) {
-          var domainLabels = $scope.labels[$scope.currentDomain];
+          var domainLabels = $localStorage[$scope.currentDomain];
           if(domainLabels !== undefined && domainLabels[url] !== undefined) {
             return domainLabels[url]
           }
@@ -306,7 +311,7 @@
         }
 
         $scope.updateMetrics = function() {
-          var domainLabels = $scope.labels[$scope.currentDomain];
+          var domainLabels = $localStorage[$scope.currentDomain];
           if(domainLabels === undefined) return;
           var data = '';
           var tp = tn = fp = fn = 0;
@@ -334,7 +339,7 @@
         }
 
         $scope.downloadLabeledData = function() {
-          var domainLabels = $scope.labels[$scope.currentDomain];
+          var domainLabels = $localStorage[$scope.currentDomain];
           if(domainLabels === undefined) return;
 
           var data = 'URL\tclassified_as\tactual_label\n';
