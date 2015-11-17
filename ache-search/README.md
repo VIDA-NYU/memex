@@ -2,7 +2,7 @@
 
 Just open the file `index.html` and adjust the line:
 
-    .constant('euiHost', 'http://gray17.poly.edu:5006/')
+    .constant('euiHost', 'http://localhost:9200/')
 
 to point to your ElasticSearch server. Then, configure the indexes in the variable `$scope.domains`.
 You should provide an object with two properties:
